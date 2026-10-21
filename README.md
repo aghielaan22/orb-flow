@@ -31,3 +31,10 @@ To run or test this project locally on your machine:
 1. **Clone the repository:**
    ```bash
    git clone [https://github.c om/YOUR-USERNAME/orb-flow.git](https://github.com/YOUR-USERNAME/orb-flow.git)
+
+2. **Open in Godot Engine:**
+   -Download and open Godot 4.
+   -Click Import and select the project.godot file inside the cloned folder.
+
+3. **Play/Test:**
+   -Press F5 to run the project locally using mouse and drag simulation for touch inputs.
