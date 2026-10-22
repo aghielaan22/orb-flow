@@ -1,44 +1,34 @@
-# 🔵 Orb Flow
+# 🌌 ORB FLOW // Vaporwave Gravity Puzzle
 
-> A physics-based touch-drawing mobile puzzle game.
-
----
-
-## 📱 About the Project
-**Orb Flow** is an intuitive, physics-driven mobile puzzle game designed for players of all ages. Players use touch-drawing mechanics to dynamically construct physical lines, guiding a falling energy orb safely through hazardous obstacles into a target portal. 
+> A high-fidelity cyberpunk/vaporwave arcade-puzzle game developed for the **UMPSA x HUAWEI Competition**. Draw lines to guide an energy orb through pulsating gravity fields, hazardous zones, and complex security terminals.
 
 ---
 
-## 🛠️ Tech Stack & Tools
-- **Game Engine:** Godot 4 (Mobile Renderer)
+## ✨ Key Features & Technical Highlights
 
-- **Language:** GDScript
-
-- **Ecosystem Services:** Huawei Mobile Services (HMS Core) - Game Service Leaderboards
-
-- **Development Workflow:** AI-assisted game architecture and iteration loops
-
-
----
-
-## 🎮 Core Features
-- **Dynamic Line-Drawing Physics:** Real-time generation of physical collision segments (`StaticBody2D`) mapped to user touch inputs.
-
-- **Strategic Ink Meter:** Limited neon ink resource system that forces players to carefully budget their line-drawing strokes.
-
-- **Hazard Obstacles & Multi-Level Progression:** Multiple progressive difficulty stages featuring cyber hazards and victory scoring overlays.
-
-- **Minimalist UI/UX:** Clean portrait layout optimized for mobile screens.
-
-- **HMS Integration:** Cloud-backed high score tracking and telemetry hooks via Huawei Game Service.
-
+* **Procedural Vaporwave Visuals**: Fully dynamic, code-driven visual presentation featuring wireframe background mountains, a classic synthwave grid with scrolling motion, and a multi-layered neon sunset.
+* **Tactical Draw-to-Start Mechanics**: Pacing designed for deep puzzle-solving. The physics simulation remains frozen until the player completes and releases their first drawn line, allowing for calculated planning.
+* **Pulsating Gravity Wells**: Dynamic nodes that rhythmically oscillate between push and pull forces, accompanied by real-time visual state indicators and scaling rings.
+* **Screen-Shake & Impact Juice**: Implemented a global camera-shake system triggered by high-velocity wall bounces, hazard impacts, and terminal victories.
+* **Terminal Select System**: A fully integrated level-selection menu allowing players to directly access any of the 6 core tactical terminals.
+* **Procedural Audio Synthesis**: Lightweight, on-the-fly audio generation via `AudioStreamWAV` for drawing, bouncing, hazards, and victory cues without external asset dependencies.
+* **HMS SDK Integration Hooks**: Architecture prepared for Huawei Mobile Services (HMS) Game Service leaderboards and achievement overlays for Huawei AppGallery deployment.
 
 ---
 
-## ⚙️ Local Setup & Installation
+## 🎮 Controls & Developer Testing Shortcuts
 
-To run or test this project locally on your machine:
+### Gameplay Controls
+* **Draw**: Click and drag (Mouse / Touch) to draw physical guiding lines.
+* **Pause**: Press `ESC` or click the pause icon to access system controls.
 
-1. **Clone the repository:**
-   ```bash
-   git clone [https://github.com/YOUR-USERNAME/orb-flow.git](https://github.com/YOUR-USERNAME/orb-flow.git)
+### Developer Testing Cheats (Active in-game)
+* **[ 1 - 6 ]**: Instantly jump to any of the 6 terminals.
+* **[ N ]**: Instant win / skip current terminal.
+* **[ R ]**: Quick restart current terminal.
+
+---
+
+## 🛠️ Built With
+* **Engine**: Godot 4.x (GDScript)
+* **Target Platform**: Cross-platform (PC / Huawei Mobile via Android Export)

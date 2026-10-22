@@ -30,3 +30,7 @@ window/stretch/aspect="keep_width"
 
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="mobile"
+
+[autoload]
+
+AudioManager="*res://AudioManager.gd"
