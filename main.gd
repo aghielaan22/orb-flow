@@ -31,6 +31,7 @@ var shake_timer: float = 0.0
 var shake_intensity: float = 0.0
 
 func _ready() -> void:
+	DisplayServer.screen_set_orientation(DisplayServer.SCREEN_PORTRAIT)
 	print("--- DEV CHEATS ACTIVE ---")
 	print("[1-6]: Jump to Level | [N]: Skip Level | [R]: Restart | [ESC]: Pause")
 	print("Orb Flow - Level " + str(current_level) + " Loaded (Juiced Mode)!")
