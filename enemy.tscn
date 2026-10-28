@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://d2vuaggcfh4kr"]
+
+[ext_resource type="Script" uid="uid://b2ochvp7panfe" path="res://enemy.gd" id="1_7k104"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xrivr"]
+size = Vector2(37, 38)
+
+[node name="Enemy" type="Area2D" unique_id=576215929 groups=["enemies"]]
+script = ExtResource("1_7k104")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1166675335]
+offset_right = 36.0
+offset_bottom = 36.0
+color = Color(1, 0, 0.49803922, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1948259026]
+position = Vector2(18, 18)
+shape = SubResource("RectangleShape2D_xrivr")

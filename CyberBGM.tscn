@@ -1,0 +1,63 @@
+[gd_scene format=3 uid="uid://byi0dw615yp0t"]
+
+[sub_resource type="GDScript" id="GDScript_mqnor"]
+script/source = "extends AudioStreamPlayer
+
+var generator: AudioStreamGenerator = AudioStreamGenerator.new()
+var playback: AudioStreamGeneratorPlayback = null
+
+var sample_rate: float = 22050.0
+var pulse_phase: float = 0.0
+var note_timer: float = 0.0
+var current_note_index: int = 0
+
+# Cyberpunk minor arpeggio frequencies (A minor / Synthwave vibes)
+var scale_notes: Array = [110.0, 130.81, 146.83, 164.81, 196.0, 220.0, 261.63, 293.66] # A2, C3, D3, E3, G3, A3, C4, D4
+var bpm: float = 120.0
+var step_duration: float = 0.0
+
+func _ready() -> void:
+	# Configure the generator stream
+	generator.mix_rate = sample_rate
+	generator.buffer_length = 0.1 # Short buffer for real-time responsiveness
+	stream = generator
+	
+	step_duration = (60.0 / bpm) / 2.0 # 16th-note steps
+	play()
+	
+	# Get the playback instance safely once playing starts
+	playback = get_stream_playback()
+
+func _process(delta: float) -> void:
+	if not playback:
+		playback = get_stream_playback()
+		if not playback:
+			return
+
+	note_timer += delta
+	if note_timer >= step_duration:
+		note_timer -= step_duration
+		current_note_index = (current_note_index + 1) % scale_notes.size()
+
+	# Fill available audio buffer frames
+	var frames_available = playback.get_frames_available()
+	var freq = scale_notes[current_note_index]
+	
+	for i in range(frames_available):
+		# Generate a smooth synth square/sine hybrid wave
+		var t = pulse_phase / sample_rate
+		var wave = sin(t * freq * TAU) + 0.5 * sin(t * freq * 2.0 * TAU) # Fundamental + Harmonic
+		
+		# Apply a quick amplitude envelope (decay per step) to make it punchy
+		var envelope = clamp(1.0 - (note_timer / step_duration), 0.0, 1.0)
+		var sample = Vector2(wave, wave) * 0.15 * envelope # Stereo output, scaled down volume
+		
+		playback.push_frame(sample)
+		pulse_phase += freq
+		
+		if pulse_phase >= sample_rate:
+			pulse_phase -= sample_rate
+"
+
+[node name="CyberBgm" type="Node" unique_id=396699860]
+script = SubResource("GDScript_mqnor")

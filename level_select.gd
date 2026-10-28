@@ -95,19 +95,22 @@ func setup_level_select_ui() -> void:
 
 	var level_descriptions = [
 		"Terminal 1: Calibration",
-		"Terminal 2: Dual Hazards",
+		"Terminal 2: Space Shooter",
 		"Terminal 3: Complex Mesh",
-		"Terminal 4: Gravity Well",
+		"Terminal 4: Space Shooter",
 		"Terminal 5: Double Well",
-		"Terminal 6: Master Protocol"
+		"Terminal 6: Space Shooter",
+		"Terminal 7: Final Core"
 	]
 
-	for i in range(1, 7):
+	# Loop through 1 to 7 terminals
+	for i in range(1, 8):
 		var lvl_btn = Button.new()
-		lvl_btn.text = "TERMINAL 0" + str(i) + "\n" + level_descriptions[i-1].split(":")[1].strip_edges()
+		var prefix = "🚀 ARCADE 0" if i in [2, 4, 6] else "🔵 PUZZLE 0"
+		lvl_btn.text = prefix + str(i) + "\n" + level_descriptions[i-1].split(":")[1].strip_edges()
 		lvl_btn.custom_minimum_size = Vector2(215, 80)
 		lvl_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		lvl_btn.add_theme_font_size_override("font_size", 14)
+		lvl_btn.add_theme_font_size_override("font_size", 13)
 		lvl_btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 		
 		var style = StyleBoxFlat.new()
@@ -116,7 +119,12 @@ func setup_level_select_ui() -> void:
 		style.border_width_top = 2
 		style.border_width_right = 2
 		style.border_width_bottom = 2
-		style.border_color = Color(0.0, 0.9, 1.0) if i <= 3 else Color(1.0, 0.0, 0.6)
+		# Distinct color coding: Orange for Space Shooter, Cyan/Pink for Physics Puzzles
+		if i in [2, 4, 6]:
+			style.border_color = Color(1.0, 0.5, 0.0)
+		else:
+			style.border_color = Color(0.0, 0.9, 1.0) if i <= 3 else Color(1.0, 0.0, 0.6)
+			
 		style.corner_radius_top_left = 6
 		style.corner_radius_top_right = 6
 		style.corner_radius_bottom_left = 6
@@ -132,8 +140,12 @@ func setup_level_select_ui() -> void:
 			var main_script = load("res://main.gd")
 			if main_script:
 				main_script.current_level = target_lvl
-				main_script.total_score = 0
-			get_tree().change_scene_to_file("res://main.tscn")
+				
+			# Correct Scene Routing: Levels 2, 4, 6 load Space Shooter; others load Physics Ball Game
+			if target_lvl in [2, 4, 6]:
+				get_tree().change_scene_to_file("res://space_shooter.tscn")
+			else:
+				get_tree().change_scene_to_file("res://main.tscn")
 		)
 		grid.add_child(lvl_btn)
 

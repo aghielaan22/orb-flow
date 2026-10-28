@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://ndkikbwdsvu"]
+
+[ext_resource type="Script" uid="uid://d62uttog4f5f" path="res://moving_hazard.gd" id="1_4hbcv"]
+
+[node name="MovingHazard" type="Area2D" unique_id=647785107]
+script = ExtResource("1_4hbcv")

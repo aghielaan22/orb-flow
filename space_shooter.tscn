@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://hvel2xtc611c"]
+
+[ext_resource type="Script" uid="uid://bawixvy1qstlh" path="res://player_ship.gd" id="1_sln81"]
+[ext_resource type="Script" uid="uid://3ceopv2bnuu7" path="res://space_shooter.gd" id="1_yyf3e"]
+[ext_resource type="Script" uid="uid://vrigfrj35y3h" path="res://ship_visual.gd" id="3_leuwj"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xrivr"]
+
+[node name="SpaceShooter" type="Node2D" unique_id=1807301991 groups=["enemies"]]
+script = ExtResource("1_yyf3e")
+
+[node name="Background" type="ColorRect" parent="." unique_id=2051068152]
+offset_right = 720.0
+offset_bottom = 1280.0
+color = Color(0.019607844, 0.050980393, 0.03137255, 0.78431374)
+
+[node name="PlayerShip" type="CharacterBody2D" parent="." unique_id=250421668]
+script = ExtResource("1_sln81")
+
+[node name="ShipVisual" type="Line2D" parent="PlayerShip" unique_id=234206623]
+script = ExtResource("3_leuwj")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PlayerShip" unique_id=1857229332]
+shape = SubResource("RectangleShape2D_xrivr")
+
+[node name="Muzzle" type="Node2D" parent="PlayerShip" unique_id=1767021728]
+position = Vector2(20, 0)
+
+[node name="EnemyTimer" type="Timer" parent="." unique_id=1355598015]
+wait_time = 1.2
+autostart = true

@@ -46,7 +46,6 @@ func setup_vaporwave_background() -> void:
 	move_child(particles, 1)
 
 func setup_leaderboard_ui() -> void:
-	# CenterContainer locks everything dead-center on mobile screen viewports
 	var center_container = CenterContainer.new()
 	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center_container)
@@ -77,7 +76,6 @@ func setup_leaderboard_ui() -> void:
 	spacer.custom_minimum_size = Vector2(0, 15)
 	vbox.add_child(spacer)
 
-	# Panel container wrapper for the score list to give it a sleek cyber box look
 	var panel_container = PanelContainer.new()
 	panel_container.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	var panel_style = StyleBoxFlat.new()
@@ -139,7 +137,24 @@ func _populate_scores() -> void:
 	for child in score_list.get_children():
 		child.queue_free()
 		
-	for entry in sample_leaderboard_data:
+	# Load actual saved scores if they exist, otherwise fallback to sample data
+	var display_data = []
+	var saved_scores = _load_actual_high_scores()
+	
+	if saved_scores.size() > 0 and saved_scores[0] > 0:
+		var names = ["Aghielaan22", "CyberRunner", "NeonAgent", "GridRunner", "Player_Zero"]
+		for i in range(saved_scores.size()):
+			if saved_scores[i] > 0:
+				display_data.append({
+					"rank": i + 1,
+					"name": names[i] if i < names.size() else "Player",
+					"score": saved_scores[i]
+				})
+	
+	if display_data.size() == 0:
+		display_data = sample_leaderboard_data
+
+	for entry in display_data:
 		var row = HBoxContainer.new()
 		row.custom_minimum_size = Vector2(380, 30)
 		row.add_theme_constant_override("separation", 20)
@@ -165,6 +180,19 @@ func _populate_scores() -> void:
 		row.add_child(score_lbl)
 		
 		score_list.add_child(row)
+
+func _load_actual_high_scores() -> Array:
+	const SAVE_PATH = "user://cyber_leaderboard.save"
+	if not FileAccess.file_exists(SAVE_PATH):
+		return []
+		
+	var file = FileAccess.open(SAVE_PATH, FileAccess.READ)
+	if file:
+		var scores = file.get_var()
+		if scores is Array:
+			return scores
+			
+	return []
 
 func _on_back_pressed() -> void:
 	var target_scene = "res://menu.tscn"

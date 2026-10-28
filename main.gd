@@ -3,6 +3,14 @@ extends Node2D
 static var current_level: int = 1
 static var total_score: int = 0
 
+var stars: Array = []
+var total_level_stars: int = 0
+var collected_stars: int = 0
+var stars_label: Label = null
+
+# Keep track of active hazards spawned via code
+var code_hazards: Array = []
+
 var is_drawing: bool = false
 var current_line: Line2D = null
 var current_collision: StaticBody2D = null
@@ -11,9 +19,6 @@ var points: Array = []
 var orb: RigidBody2D = null
 var spawn_position: Vector2 = Vector2(360, 150)
 
-var max_ink: float = 800.0
-var current_ink: float = 800.0
-var ink_bar: ProgressBar = null
 var level_label: Label = null
 var score_label: Label = null
 var is_game_over: bool = false
@@ -22,7 +27,6 @@ var has_started_simulation: bool = false
 var level_start_time: float = 0.0
 var pause_canvas: CanvasLayer = null
 
-var gravity_wells: Array = []
 var sfx_player: AudioStreamPlayer = null
 
 # Screen Shake Variables
@@ -31,14 +35,17 @@ var shake_timer: float = 0.0
 var shake_intensity: float = 0.0
 
 func _ready() -> void:
-	DisplayServer.screen_set_orientation(DisplayServer.SCREEN_PORTRAIT)
 	print("--- DEV CHEATS ACTIVE ---")
-	print("[1-6]: Jump to Level | [N]: Skip Level | [R]: Restart | [ESC]: Pause")
-	print("Orb Flow - Level " + str(current_level) + " Loaded (Juiced Mode)!")
+	print("[1-7]: Jump to Level | [N]: Skip Level | [R]: Restart | [ESC]: Pause")
+	print("Orb Flow - Level " + str(current_level) + " Loaded (Streamlined Mode)!")
 	setup_audio_system()
 	setup_camera()
 	setup_game_elements()
 	spawn_orb()
+	# Example 1: A hazard starting at X: 360, Y: 400, moving at speed 180, spanning 200 pixels right/left
+	spawn_code_hazard(Vector2(360, 400), 180.0, 200.0, Vector2.RIGHT)
+	# Example 2: Another hazard lower down on the screen moving left
+	spawn_code_hazard(Vector2(360, 700), 220.0, 150.0, Vector2.LEFT)
 
 func setup_camera() -> void:
 	camera = Camera2D.new()
@@ -50,9 +57,28 @@ func setup_camera() -> void:
 func trigger_screen_shake(intensity: float, duration: float) -> void:
 	shake_intensity = intensity
 	shake_timer = duration
+	
+func trigger_screen_flash(flash_color: Color, duration: float = 0.2) -> void:
+	var flash = ColorRect.new()
+	flash.color = flash_color
+	flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	
+	# Put it on a high canvas layer so it overlays everything
+	var canvas = CanvasLayer.new()
+	canvas.layer = 150
+	canvas.add_child(flash)
+	
+	# Attach to self so it clears automatically when the level reloads
+	add_child(canvas)
+	
+	# Tween to fade out and free
+	var tween = create_tween()
+	tween.tween_property(flash, "modulate:a", 0.0, duration)
+	await tween.finished
+	if is_instance_valid(canvas):
+		canvas.queue_free()
 
 func _process(delta: float) -> void:
-	# Handle Screen Shake Offset translation
 	if shake_timer > 0:
 		shake_timer -= delta
 		if camera and is_instance_valid(camera):
@@ -60,37 +86,6 @@ func _process(delta: float) -> void:
 	else:
 		if camera and is_instance_valid(camera):
 			camera.offset = Vector2.ZERO
-
-func _physics_process(delta: float) -> void:
-	if not has_started_simulation or is_game_over or is_paused:
-		return
-		
-	var time_sec = Time.get_ticks_msec() * 0.001
-	
-	for i in range(gravity_wells.size()):
-		var well = gravity_wells[i]
-		if well != null and is_instance_valid(well):
-			var phase = time_sec * 2.5 + (i * 1.5)
-			var cycle = sin(phase)
-			
-			well.set_meta("cycle_value", cycle)
-			
-			var outer_ring = well.get_node_or_null("OuterRing") as Line2D
-			if outer_ring:
-				if cycle > 0.0:
-					outer_ring.default_color = Color(0.0, 0.9, 1.0, 0.8)
-					outer_ring.scale = Vector2.ONE * (1.0 + (cycle * 0.25))
-				else:
-					outer_ring.default_color = Color(1.0, 0.0, 0.6, 0.9)
-					outer_ring.scale = Vector2.ONE * (1.0 + (cycle * 0.2))
-
-			if orb != null and is_instance_valid(orb) and not is_game_over:
-				var dir = well.global_position - orb.global_position
-				var dist = dir.length()
-				if dist < 400.0 and dist > 15.0:
-					var force_magnitude = cycle * 22000.0 / (dist + 30.0)
-					var force = dir.normalized() * force_magnitude
-					orb.apply_central_force(force * delta * 60.0)
 
 func setup_audio_system() -> void:
 	sfx_player = AudioStreamPlayer.new()
@@ -103,17 +98,20 @@ func play_cyber_sfx(sound_type: String) -> void:
 	
 	match sound_type:
 		"draw":
-			duration = 0.04
-			freq = 880.0
+			duration = 0.03
+			freq = 920.0
 		"bounce":
-			duration = 0.08
-			freq = 523.25
+			duration = 0.06
+			freq = 587.33 # D5 note for crisp bounce
+		"star":
+			duration = 0.25
+			freq = 1318.51 # E6 high chime for star collection
 		"victory":
-			duration = 0.3
+			duration = 0.35
 			freq = 1046.50
 		"hazard":
-			duration = 0.2
-			freq = 150.0
+			duration = 0.25
+			freq = 110.0 # Low sci-fi sub buzz for danger
 
 	var num_samples = int(sample_rate * duration)
 	var buffer = PackedByteArray()
@@ -121,8 +119,9 @@ func play_cyber_sfx(sound_type: String) -> void:
 	
 	for i in range(num_samples):
 		var t = float(i) / sample_rate
-		var wave = sin(t * freq * TAU)
-		var val = int(wave * 12000)
+		var envelope = 1.0 - (float(i) / num_samples) # Fade out smoothly
+		var wave = sin(t * freq * TAU) * envelope
+		var val = int(wave * 14000)
 		buffer.encode_s16(i * 2, val)
 
 	var sample_stream = AudioStreamWAV.new()
@@ -171,23 +170,56 @@ func setup_game_elements() -> void:
 	var canvas_layer = CanvasLayer.new()
 	canvas_layer.layer = 5
 	
+	# Helper styling function for top bar buttons
+	var top_btn_style = StyleBoxFlat.new()
+	top_btn_style.bg_color = Color(0.06, 0.04, 0.12, 0.9)
+	top_btn_style.border_width_left = 2
+	top_btn_style.border_width_top = 2
+	top_btn_style.border_width_right = 2
+	top_btn_style.border_width_bottom = 2
+	top_btn_style.border_color = Color(0.0, 0.9, 1.0)
+	top_btn_style.corner_radius_top_left = 6
+	top_btn_style.corner_radius_top_right = 6
+	top_btn_style.corner_radius_bottom_left = 6
+	top_btn_style.corner_radius_bottom_right = 6
+
 	var reset_button = Button.new()
-	reset_button.text = " ↺ "
-	reset_button.position = Vector2(20, 40)
-	reset_button.custom_minimum_size = Vector2(45, 40)
+	reset_button.text = "↺"
+	reset_button.position = Vector2(25, 30)
+	reset_button.custom_minimum_size = Vector2(50, 50)
+	reset_button.add_theme_font_size_override("font_size", 22)
+	reset_button.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	reset_button.add_theme_stylebox_override("normal", top_btn_style)
+	reset_button.add_theme_stylebox_override("hover", top_btn_style)
+	reset_button.add_theme_stylebox_override("pressed", top_btn_style)
 	reset_button.pressed.connect(reset_level)
 	canvas_layer.add_child(reset_button)
 
 	var pause_button = Button.new()
-	pause_button.text = " ⏸ "
-	pause_button.position = Vector2(70, 40)
-	pause_button.custom_minimum_size = Vector2(45, 40)
+	pause_button.text = "❚❚"
+	pause_button.position = Vector2(85, 30)
+	pause_button.custom_minimum_size = Vector2(50, 50)
+	pause_button.add_theme_font_size_override("font_size", 20)
+	pause_button.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	pause_button.add_theme_stylebox_override("normal", top_btn_style)
+	pause_button.add_theme_stylebox_override("hover", top_btn_style)
+	pause_button.add_theme_stylebox_override("pressed", top_btn_style)
 	pause_button.pressed.connect(toggle_pause)
 	canvas_layer.add_child(pause_button)
 
 	var menu_button = Button.new()
-	menu_button.text = " MENU "
-	menu_button.position = Vector2(120, 40)
+	menu_button.text = "MENU"
+	menu_button.position = Vector2(145, 30)
+	menu_button.custom_minimum_size = Vector2(85, 50)
+	menu_button.add_theme_font_size_override("font_size", 16)
+	menu_button.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	
+	var menu_style = top_btn_style.duplicate()
+	menu_style.border_color = Color(1.0, 0.0, 0.4)
+	menu_button.add_theme_stylebox_override("normal", menu_style)
+	menu_button.add_theme_stylebox_override("hover", menu_style)
+	menu_button.add_theme_stylebox_override("pressed", menu_style)
+	
 	menu_button.pressed.connect(func() -> void: 
 		get_tree().paused = false
 		current_level = 1 
@@ -198,42 +230,25 @@ func setup_game_elements() -> void:
 
 	level_label = Label.new()
 	level_label.text = "LVL " + str(current_level)
-	level_label.position = Vector2(210, 47)
+	level_label.position = Vector2(250, 42)
 	level_label.add_theme_color_override("font_color", Color(1.0, 0.0, 0.5))
-	level_label.add_theme_font_size_override("font_size", 16)
+	level_label.add_theme_font_size_override("font_size", 20)
 	canvas_layer.add_child(level_label)
 
 	score_label = Label.new()
 	score_label.text = "PTS: " + str(total_score)
-	score_label.position = Vector2(280, 47)
+	score_label.position = Vector2(350, 42)
 	score_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
-	score_label.add_theme_font_size_override("font_size", 16)
+	score_label.add_theme_font_size_override("font_size", 20)
 	canvas_layer.add_child(score_label)
 
-	ink_bar = ProgressBar.new()
-	ink_bar.position = Vector2(380, 48)
-	ink_bar.custom_minimum_size = Vector2(300, 20)
-	ink_bar.max_value = max_ink
-	ink_bar.value = current_ink
-	ink_bar.show_percentage = false
-	
-	var fill_style = StyleBoxFlat.new()
-	fill_style.bg_color = Color(0.0, 0.9, 1.0)
-	fill_style.corner_radius_top_left = 4
-	fill_style.corner_radius_top_right = 4
-	fill_style.corner_radius_bottom_left = 4
-	fill_style.corner_radius_bottom_right = 4
-	ink_bar.add_theme_stylebox_override("fill", fill_style)
-	
-	var bg_style = StyleBoxFlat.new()
-	bg_style.bg_color = Color(0.1, 0.1, 0.18, 0.8)
-	bg_style.corner_radius_top_left = 4
-	bg_style.corner_radius_top_right = 4
-	bg_style.corner_radius_bottom_left = 4
-	bg_style.corner_radius_bottom_right = 4
-	ink_bar.add_theme_stylebox_override("background", bg_style)
-	
-	canvas_layer.add_child(ink_bar)
+	stars_label = Label.new()
+	stars_label.text = "★ 0/0"
+	stars_label.position = Vector2(560, 42)
+	stars_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
+	stars_label.add_theme_font_size_override("font_size", 20)
+	canvas_layer.add_child(stars_label)
+
 	add_child(canvas_layer)
 
 func setup_vaporwave_background() -> void:
@@ -292,37 +307,34 @@ func setup_screen_borders() -> void:
 	add_child(death_area)
 
 func setup_level_configuration() -> void:
-	gravity_wells.clear()
+	stars.clear()
+	collected_stars = 0
 	
-	if current_level == 1:
-		max_ink = 800.0
-		setup_hazard(Vector2(360, 700), Vector2(300, 20))
-	elif current_level == 2:
-		max_ink = 650.0
-		setup_hazard(Vector2(240, 600), Vector2(220, 20))
-		setup_hazard(Vector2(480, 850), Vector2(220, 20))
-	elif current_level == 3:
-		max_ink = 500.0
-		setup_hazard(Vector2(360, 550), Vector2(260, 18))
-		setup_hazard(Vector2(200, 800), Vector2(180, 18))
-		setup_hazard(Vector2(520, 950), Vector2(180, 18))
-	elif current_level == 4:
-		max_ink = 600.0
-		setup_hazard(Vector2(360, 680), Vector2(320, 18))
-		setup_gravity_well(Vector2(360, 450))
-	elif current_level == 5:
-		max_ink = 500.0
-		setup_hazard(Vector2(240, 580), Vector2(200, 18))
-		setup_hazard(Vector2(480, 820), Vector2(200, 18))
-		setup_gravity_well(Vector2(360, 700))
-	else:
-		current_level = 6
-		max_ink = 420.0
-		setup_hazard(Vector2(360, 600), Vector2(260, 16))
-		setup_gravity_well(Vector2(220, 420))
-		setup_gravity_well(Vector2(500, 880))
+	match current_level:
+		1:
+			setup_hazard(Vector2(360, 650), Vector2(260, 24))
+			setup_star(Vector2(260, 500))
+		3:
+			setup_hazard(Vector2(200, 500), Vector2(240, 20))
+			setup_hazard(Vector2(520, 800), Vector2(240, 20))
+			setup_star(Vector2(180, 450))
+			setup_star(Vector2(560, 950))
+		5:
+			setup_hazard(Vector2(360, 620), Vector2(320, 20))
+			setup_star(Vector2(180, 350))
+			setup_star(Vector2(540, 950))
+		7:
+			setup_hazard(Vector2(240, 500), Vector2(200, 20))
+			setup_hazard(Vector2(480, 820), Vector2(200, 20))
+			setup_star(Vector2(120, 320))
+			setup_star(Vector2(600, 600))
+			setup_star(Vector2(360, 1020))
+		_:
+			setup_hazard(Vector2(360, 700), Vector2(300, 20))
+			setup_star(Vector2(260, 500))
 		
-	current_ink = max_ink
+	total_level_stars = stars.size()
+	update_stars_ui()
 
 func setup_hazard(pos: Vector2, size: Vector2) -> void:
 	var hazard_area = Area2D.new()
@@ -343,30 +355,44 @@ func setup_hazard(pos: Vector2, size: Vector2) -> void:
 	hazard_area.body_entered.connect(_on_hazard_entered)
 	add_child(hazard_area)
 
-func setup_gravity_well(pos: Vector2) -> void:
-	var well_area = Area2D.new()
-	well_area.position = pos
-	well_area.set_meta("cycle_value", 0.0)
-	gravity_wells.append(well_area)
+func setup_star(pos: Vector2) -> void:
+	var star_area = Area2D.new()
+	star_area.position = pos
 	
-	var core = Line2D.new()
-	core.width = 4.0
-	core.default_color = Color(1.0, 1.0, 1.0)
-	for i in range(17):
-		var angle = i * (PI * 2 / 16)
-		core.add_point(Vector2(cos(angle) * 22, sin(angle) * 22))
-	well_area.add_child(core)
+	var shape = CollisionShape2D.new()
+	var circle = CircleShape2D.new()
+	circle.radius = 25.0
+	shape.shape = circle
+	star_area.add_child(shape)
 	
-	var outer_ring = Line2D.new()
-	outer_ring.name = "OuterRing"
-	outer_ring.width = 3.0
-	outer_ring.default_color = Color(0.0, 0.9, 1.0, 0.8)
-	for i in range(25):
-		var angle = i * (PI * 2 / 24)
-		outer_ring.add_point(Vector2(cos(angle) * 50, sin(angle) * 50))
-	well_area.add_child(outer_ring)
+	var visual = Line2D.new()
+	visual.width = 4.0
+	visual.default_color = Color(1.0, 0.85, 0.0)
+	for i in range(11):
+		var angle = i * (PI * 2 / 10)
+		var r = 20.0 if i % 2 == 0 else 10.0
+		visual.add_point(Vector2(cos(angle) * r, sin(angle) * r))
+	star_area.add_child(visual)
 	
-	add_child(well_area)
+	star_area.body_entered.connect(func(body):
+		if body == orb and star_area in stars:
+			stars.erase(star_area)
+			collected_stars += 1
+			play_cyber_sfx("bounce")
+			play_cyber_sfx("star")
+			trigger_screen_flash(Color(1.0, 0.85, 0.0, 0.4), 0.15) # Gold flash
+			spawn_success_burst(star_area.global_position, self)
+			star_area.queue_free()
+			update_stars_ui()
+			print("Star collected! ", collected_stars, "/", total_level_stars)
+	)
+	
+	add_child(star_area)
+	stars.append(star_area)
+
+func update_stars_ui() -> void:
+	if stars_label:
+		stars_label.text = "★ " + str(collected_stars) + " / " + str(total_level_stars)
 
 func spawn_orb() -> void:
 	if orb:
@@ -410,7 +436,6 @@ func spawn_orb() -> void:
 	orb_visual.add_point(Vector2(1, 0))
 	orb.add_child(orb_visual)
 	
-	# Neon Trail attached smoothly behind the moving orb
 	var trail = Line2D.new()
 	trail.name = "NeonTrail"
 	trail.top_level = true
@@ -421,20 +446,6 @@ func spawn_orb() -> void:
 	trail.end_cap_mode = Line2D.LINE_CAP_ROUND
 	orb.add_child(trail)
 	
-	var trail_script = GDScript.new()
-	trail_script.source_code = """
-extends Line2D
-var target: Node2D = null
-func _ready() -> void:
-	target = get_parent()
-func _process(_delta: float) -> void:
-	if target and is_instance_valid(target):
-		add_point(target.global_position)
-		if get_point_count() > 25:
-			remove_point(0)
-"""
-	
-	# Trigger camera shake on high-velocity impact
 	orb.body_entered.connect(func(_body): 
 		play_cyber_sfx("bounce")
 		if orb.linear_velocity.length() > 250.0:
@@ -466,24 +477,12 @@ func spawn_success_burst(at_position: Vector2, parent_node: Node) -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
-		if event.keycode == KEY_1:
-			current_level = 1
-			get_tree().reload_current_scene()
-		elif event.keycode == KEY_2:
-			current_level = 2
-			get_tree().reload_current_scene()
-		elif event.keycode == KEY_3:
-			current_level = 3
-			get_tree().reload_current_scene()
-		elif event.keycode == KEY_4:
-			current_level = 4
-			get_tree().reload_current_scene()
-		elif event.keycode == KEY_5:
-			current_level = 5
-			get_tree().reload_current_scene()
-		elif event.keycode == KEY_6:
-			current_level = 6
-			get_tree().reload_current_scene()
+		if event.keycode >= KEY_1 and event.keycode <= KEY_7:
+			current_level = event.keycode - KEY_0
+			if current_level in [2, 4, 6]:
+				get_tree().change_scene_to_file("res://space_shooter.tscn")
+			else:
+				get_tree().reload_current_scene()
 		elif event.keycode == KEY_N:
 			if orb and not is_game_over:
 				var goal_node = get_node_or_null("GoalArea")
@@ -520,72 +519,196 @@ func toggle_pause() -> void:
 		if pause_canvas and is_instance_valid(pause_canvas):
 			pause_canvas.queue_free()
 
+func create_pause_button(parent: Node, text: String, border_color: Color, callback: Callable) -> void:
+	var btn = Button.new()
+	btn.text = text
+	btn.custom_minimum_size = Vector2(320, 52)
+	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	btn.add_theme_font_size_override("font_size", 18)
+	btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.05, 0.16, 0.95)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = border_color
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	
+	btn.add_theme_stylebox_override("normal", style)
+	btn.add_theme_stylebox_override("hover", style)
+	btn.add_theme_stylebox_override("pressed", style)
+	
+	btn.pressed.connect(callback)
+	parent.add_child(btn)
+
 func show_pause_screen() -> void:
 	pause_canvas = CanvasLayer.new()
 	pause_canvas.layer = 100
 	pause_canvas.process_mode = Node.PROCESS_MODE_ALWAYS
 	
+	# Dim backdrop
 	var overlay = ColorRect.new()
-	overlay.color = Color(0.0, 0.0, 0.0, 0.8)
+	overlay.color = Color(0.02, 0.01, 0.05, 0.85)
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	pause_canvas.add_child(overlay)
 	
+	var center = CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pause_canvas.add_child(center)
+	
+	# Styled Panel Container for perfect centering & cyberpunk border matching overlays
+	var overlay_panel = PanelContainer.new()
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.06, 0.04, 0.14, 0.95)
+	style.border_width_left = 3
+	style.border_width_top = 3
+	style.border_width_right = 3
+	style.border_width_bottom = 3
+	style.border_color = Color(0.0, 0.9, 1.0) # Cyberpunk Cyan
+	style.corner_radius_top_left = 10
+	style.corner_radius_top_right = 10
+	style.corner_radius_bottom_left = 10
+	style.corner_radius_bottom_right = 10
+	style.content_margin_left = 35
+	style.content_margin_right = 35
+	style.content_margin_top = 30
+	style.content_margin_bottom = 30
+	overlay_panel.add_theme_stylebox_override("panel", style)
+	center.add_child(overlay_panel)
+	
 	var vbox = VBoxContainer.new()
-	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	pause_canvas.add_child(vbox)
+	vbox.custom_minimum_size = Vector2(380, 0)
+	vbox.add_theme_constant_override("separation", 18)
+	overlay_panel.add_child(vbox)
 	
 	var title = Label.new()
 	title.text = "SYSTEM PAUSED"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 32)
-	title.add_theme_color_override("font_color", Color(0.0, 0.9, 1.0))
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
 	vbox.add_child(title)
 	
 	var spacer = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 30)
+	spacer.custom_minimum_size = Vector2(0, 5)
 	vbox.add_child(spacer)
 	
-	var resume_btn = Button.new()
-	resume_btn.text = " RESUME "
-	resume_btn.custom_minimum_size = Vector2(240, 50)
-	resume_btn.pressed.connect(toggle_pause)
-	vbox.add_child(resume_btn)
+	# Resume Button
+	create_pause_button(vbox, "▶ RESUME PROTOCOL", Color(0.0, 0.9, 1.0), func():
+		toggle_pause()
+	)
 	
-	var spacer2 = Control.new()
-	spacer2.custom_minimum_size = Vector2(0, 12)
-	vbox.add_child(spacer2)
-	
-	var restart_btn = Button.new()
-	restart_btn.text = " RESTART TERMINAL "
-	restart_btn.custom_minimum_size = Vector2(240, 50)
-	restart_btn.pressed.connect(func() -> void:
+	# Restart Button
+	create_pause_button(vbox, "↺ RESTART TERMINAL", Color(1.0, 0.0, 0.6), func():
 		get_tree().paused = false
+		if pause_canvas and is_instance_valid(pause_canvas):
+			pause_canvas.queue_free()
 		reset_level()
 	)
-	vbox.add_child(restart_btn)
 	
-	var spacer3 = Control.new()
-	spacer3.custom_minimum_size = Vector2(0, 12)
-	vbox.add_child(spacer3)
+	# Menu Button
+	create_pause_button(vbox, "⌂ MAIN MENU", Color(1.0, 0.0, 0.4), func():
+		get_tree().paused = false
+		if pause_canvas and is_instance_valid(pause_canvas):
+			pause_canvas.queue_free()
+		current_level = 1
+		total_score = 0
+		get_tree().change_scene_to_file("res://menu.tscn")
+	)
+	
+	add_child(pause_canvas)
+
+# --- RESTORED ORIGINAL VICTORY SCREEN ---
+func show_victory_screen() -> void:
+	is_drawing = false
+	
+	var canvas = CanvasLayer.new()
+	canvas.layer = 10
+	
+	var overlay = ColorRect.new()
+	overlay.color = Color(0.0, 0.0, 0.0, 0.85)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	canvas.add_child(overlay)
+	
+	var center_container = CenterContainer.new()
+	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	canvas.add_child(center_container)
+	
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.custom_minimum_size = Vector2(450, 400)
+	center_container.add_child(vbox)
+	
+	var title = Label.new()
+	title.text = "TERMINAL " + str(current_level) + " CLEARED"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 32)
+	title.add_theme_color_override("font_color", Color(1.0, 0.7, 0.0))
+	vbox.add_child(title)
+	
+	var spacer_top = Control.new()
+	spacer_top.custom_minimum_size = Vector2(0, 15)
+	vbox.add_child(spacer_top)
+	
+	var score_display = Label.new()
+	score_display.text = "TOTAL SYNC SCORE: " + str(total_score)
+	score_display.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	score_display.add_theme_font_size_override("font_size", 18)
+	score_display.add_theme_color_override("font_color", Color(0.0, 0.9, 1.0))
+	vbox.add_child(score_display)
+	
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 35)
+	vbox.add_child(spacer)
+	
+	var next_btn = Button.new()
+	var next_target_level = current_level + 1
+	
+	if next_target_level in [2, 4, 6]:
+		next_btn.text = " ▶ LAUNCH SPACE SHOOTER (LEVEL " + str(next_target_level) + ") "
+	elif next_target_level > 7:
+		next_btn.text = " GAME COMPLETED! RESTART "
+	else:
+		next_btn.text = " NEXT TERMINAL (LEVEL " + str(next_target_level) + ") "
+		
+	next_btn.custom_minimum_size = Vector2(320, 50)
+	next_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	next_btn.pressed.connect(func() -> void:
+		current_level += 1
+		if current_level > 7:
+			current_level = 1
+			total_score = 0
+			get_tree().change_scene_to_file("res://menu.tscn")
+		elif current_level in [2, 4, 6]:
+			get_tree().change_scene_to_file("res://space_shooter.tscn")
+		else:
+			get_tree().reload_current_scene()
+	)
+	vbox.add_child(next_btn)
+	
+	var spacer2 = Control.new()
+	spacer2.custom_minimum_size = Vector2(0, 15)
+	vbox.add_child(spacer2)
 	
 	var menu_btn = Button.new()
-	menu_btn.text = " MAIN MENU "
-	menu_btn.custom_minimum_size = Vector2(240, 50)
+	menu_btn.text = " MENU "
+	menu_btn.custom_minimum_size = Vector2(320, 50)
+	menu_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	menu_btn.pressed.connect(func() -> void:
-		get_tree().paused = false
 		current_level = 1
 		total_score = 0
 		get_tree().change_scene_to_file("res://menu.tscn")
 	)
 	vbox.add_child(menu_btn)
 	
-	add_child(pause_canvas)
+	add_child(canvas)
 
 func start_drawing(pos: Vector2) -> void:
-	if current_ink <= 0:
-		return
-		
 	is_drawing = true
 	points = [pos]
 	
@@ -603,17 +726,8 @@ func start_drawing(pos: Vector2) -> void:
 	play_cyber_sfx("draw")
 
 func add_point_to_line(pos: Vector2) -> void:
-	if current_ink <= 0:
-		stop_drawing()
-		return
-		
 	if points.size() > 0 and pos.distance_to(points[-1]) < 10.0:
 		return
-		
-	var dist = pos.distance_to(points[-1]) if points.size() > 0 else 0.0
-	current_ink = max(0.0, current_ink - dist)
-	if ink_bar:
-		ink_bar.value = current_ink
 		
 	points.append(pos)
 	current_line.add_point(pos)
@@ -635,9 +749,6 @@ func add_point_to_line(pos: Vector2) -> void:
 		
 		collision_shape.shape = segment
 		current_collision.add_child(collision_shape)
-		
-	if current_ink <= 0:
-		stop_drawing()
 
 func spawn_spark(pos: Vector2) -> void:
 	var spark = CPUParticles2D.new()
@@ -672,8 +783,14 @@ func stop_drawing() -> void:
 
 func _on_goal_entered(body: Node2D) -> void:
 	if body == orb and not is_game_over:
+		if collected_stars < total_level_stars:
+			print("Goal locked! Collect all stars first: ", collected_stars, "/", total_level_stars)
+			play_cyber_sfx("hazard")
+			return
+			
 		is_game_over = true
 		play_cyber_sfx("victory")
+		trigger_screen_flash(Color(0.0, 1.0, 0.9, 0.5), 0.4) # Cyan cyber flash
 		trigger_screen_shake(10.0, 0.35)
 		
 		var goal_node = get_node_or_null("GoalArea")
@@ -682,97 +799,26 @@ func _on_goal_entered(body: Node2D) -> void:
 		
 		var elapsed_time = (Time.get_ticks_msec() - level_start_time) / 1000.0
 		var time_bonus = max(0, int(100 - (elapsed_time * 2)))
-		var ink_bonus = int(current_ink)
-		var level_score = 500 + ink_bonus + time_bonus
+		var star_bonus = collected_stars * 200
+		var level_score = 500 + time_bonus + star_bonus
 		
 		total_score += level_score
 		print("VICTORY! Level score: ", level_score, " | Total Score: ", total_score)
 		
 		submit_score_to_huawei_leaderboard(total_score)
-		show_victory_screen()
+		call_deferred("show_victory_screen")
 
 func _on_hazard_entered(body: Node2D) -> void:
 	if body == orb and not is_game_over:
 		is_game_over = true
 		play_cyber_sfx("hazard")
+		trigger_screen_flash(Color(1.0, 0.0, 0.4, 0.6), 0.3) # Crimson
 		trigger_screen_shake(12.0, 0.4)
 		print("OOF! Orb hit a hazard or went out of bounds!")
 		call_deferred("reset_level")
 
 func submit_score_to_huawei_leaderboard(score: int) -> void:
 	print("[HMS SDK Hook] Submitting total score to Huawei Game Service Leaderboard: ", score)
-
-func show_victory_screen() -> void:
-	is_drawing = false
-	
-	var canvas = CanvasLayer.new()
-	canvas.layer = 10
-	
-	var overlay = ColorRect.new()
-	overlay.color = Color(0.0, 0.0, 0.0, 0.85)
-	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	canvas.add_child(overlay)
-	
-	# --- PERFECTLY CENTERED VICTORY PANEL ---
-	var center_container = CenterContainer.new()
-	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	canvas.add_child(center_container)
-	
-	var vbox = VBoxContainer.new()
-	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.custom_minimum_size = Vector2(450, 400)
-	center_container.add_child(vbox)
-	
-	var title = Label.new()
-	title.text = "TERMINAL " + str(current_level) + " CLEARED"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 32)
-	title.add_theme_color_override("font_color", Color(1.0, 0.7, 0.0))
-	vbox.add_child(title)
-	
-	var spacer_top = Control.new()
-	spacer_top.custom_minimum_size = Vector2(0, 15)
-	vbox.add_child(spacer_top)
-	
-	var score_display = Label.new()
-	score_display.text = "TOTAL SYNC SCORE: " + str(total_score)
-	score_display.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	score_display.add_theme_font_size_override("font_size", 18)
-	score_display.add_theme_color_override("font_color", Color(0.0, 0.9, 1.0))
-	vbox.add_child(score_display)
-	
-	var spacer = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 35)
-	vbox.add_child(spacer)
-	
-	var next_btn = Button.new()
-	next_btn.text = " NEXT TERMINAL "
-	next_btn.custom_minimum_size = Vector2(280, 50)
-	next_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	next_btn.pressed.connect(func() -> void:
-		current_level += 1
-		if current_level > 6:
-			current_level = 1
-		get_tree().reload_current_scene()
-	)
-	vbox.add_child(next_btn)
-	
-	var spacer2 = Control.new()
-	spacer2.custom_minimum_size = Vector2(0, 15)
-	vbox.add_child(spacer2)
-	
-	var menu_btn = Button.new()
-	menu_btn.text = " MENU "
-	menu_btn.custom_minimum_size = Vector2(280, 50)
-	menu_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	menu_btn.pressed.connect(func() -> void:
-		current_level = 1
-		total_score = 0
-		get_tree().change_scene_to_file("res://menu.tscn")
-	)
-	vbox.add_child(menu_btn)
-	
-	add_child(canvas)
 
 func reset_level() -> void:
 	is_game_over = false
@@ -839,3 +885,31 @@ class VaporwaveBackground extends Control:
 			var y = horizon_y + pow(progress, 2.0) * (sz.y - horizon_y)
 			var alpha = progress * 0.7
 			draw_line(Vector2(0, y), Vector2(sz.x, y), Color(0.0, 0.9, 1.0, alpha), 1.5)
+
+func spawn_code_hazard(spawn_pos: Vector2, speed: float, limit: float, direction: Vector2) -> void:
+	var hazard = Area2D.new()
+	# Load and attach your moving_hazard.gd script
+	hazard.set_script(load("res://moving_hazard.gd"))
+	hazard.position = spawn_pos
+	
+	# Pass the custom parameters into the hazard script variables
+	hazard.move_speed = speed
+	hazard.travel_limit = limit
+	hazard.move_direction = direction
+	
+	# Add it to the scene tree
+	add_child(hazard)
+	
+	# Call the visual setup function inside the hazard script
+	if hazard.has_method("setup_visual"):
+		hazard.setup_visual()
+		
+	# Track it in our array
+	code_hazards.append(hazard)
+
+func start_bonus_minigame() -> void:
+	get_tree().change_scene_to_file("res://space_shooter.tscn")
+
+func complete_level_one() -> void:
+	print("Level 1 Complete! Launching Space Shooter (Level 2)")
+	get_tree().change_scene_to_file("res://space_shooter.tscn")

@@ -52,6 +52,7 @@ func setup_vaporwave_background() -> void:
 
 func setup_cyber_menu() -> void:
 	var center_container = CenterContainer.new()
+	center_container.name = "MenuCenter"
 	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center_container)
 
@@ -80,15 +81,18 @@ func setup_cyber_menu() -> void:
 
 	create_cyber_button(vbox, "INITIATE GAME", Color(0.0, 0.9, 1.0), func():
 		play_menu_click_sfx()
+		var main_script = load("res://main.gd")
+		if main_script:
+			main_script.current_level = 1
 		get_tree().change_scene_to_file("res://main.tscn")
 	)
 
 	add_menu_spacer(vbox)
 
-	# --- LEVEL SELECT BUTTON ---
+	# --- LEVEL SELECT TERMINALS OVERLAY ---
 	create_cyber_button(vbox, "SELECT TERMINAL", Color(0.0, 1.0, 0.5), func():
 		play_menu_click_sfx()
-		get_tree().change_scene_to_file("res://level_select.tscn")
+		show_terminal_selector(center_container)
 	)
 
 	add_menu_spacer(vbox)
@@ -96,7 +100,10 @@ func setup_cyber_menu() -> void:
 	# --- HMS LEADERBOARD BUTTON ---
 	create_cyber_button(vbox, "HMS LEADERBOARD", Color(1.0, 0.7, 0.0), func():
 		play_menu_click_sfx()
-		get_tree().change_scene_to_file("res://leaderboard.tscn")
+		if ResourceLoader.exists("res://leaderboard.tscn"):
+			get_tree().change_scene_to_file("res://leaderboard.tscn")
+		else:
+			print("[Menu] leaderboard.tscn not found yet.")
 	)
 
 	add_menu_spacer(vbox)
@@ -147,11 +154,75 @@ func setup_cyber_menu() -> void:
 	cheat_details.add_theme_color_override("font_color", Color(0.0, 1.0, 0.9, 0.9))
 	cheat_vbox.add_child(cheat_details)
 
+func show_terminal_selector(container: CenterContainer) -> void:
+	# Clear main menu items safely
+	for child in container.get_children():
+		child.queue_free()
+
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.custom_minimum_size = Vector2(450, 750)
+	container.add_child(vbox)
+
+	var title = Label.new()
+	title.text = "SELECT TERMINAL"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 38)
+	title.add_theme_color_override("font_color", Color(0.0, 1.0, 0.5))
+	vbox.add_child(title)
+
+	var sub = Label.new()
+	sub.text = "CHOOSE PUZZLE OR ARCADE SECTOR"
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub.add_theme_font_size_override("font_size", 13)
+	sub.add_theme_color_override("font_color", Color(0.0, 0.9, 1.0))
+	vbox.add_child(sub)
+
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 15)
+	vbox.add_child(spacer)
+
+	# Generate buttons for levels 1 to 7
+	for i in range(1, 8):
+		var btn_text = ""
+		var btn_color = Color.WHITE
+		
+		if i in [2, 4, 6]:
+			btn_text = "🚀 SPACE SHOOTER — TERMINAL " + str(i)
+			btn_color = Color(1.0, 0.5, 0.0)
+		else:
+			btn_text = "🔵 PHYSICS PUZZLE — TERMINAL " + str(i)
+			btn_color = Color(0.2, 1.0, 0.8)
+
+		create_cyber_button(vbox, btn_text, btn_color, func():
+			play_menu_click_sfx()
+			launch_level(i)
+		)
+		add_menu_spacer(vbox)
+
+	# Back Button
+	create_cyber_button(vbox, "« BACK TO MAIN MENU", Color(1.0, 0.0, 0.4), func():
+		play_menu_click_sfx()
+		container.queue_free()
+		setup_cyber_menu()
+	)
+
+func launch_level(lvl: int) -> void:
+	print("[Menu] Launching Terminal: ", lvl)
+	var main_script = load("res://main.gd")
+	if main_script:
+		main_script.current_level = lvl
+
+	if lvl in [2, 4, 6]:
+		get_tree().change_scene_to_file("res://space_shooter.tscn")
+	else:
+		get_tree().change_scene_to_file("res://main.tscn")
+
 func create_cyber_button(parent: Node, text: String, accent_color: Color, callback: Callable) -> void:
 	var btn = Button.new()
 	btn.text = text
-	btn.custom_minimum_size = Vector2(320, 48)
-	btn.add_theme_font_size_override("font_size", 15)
+	btn.custom_minimum_size = Vector2(340, 46)
+	btn.add_theme_font_size_override("font_size", 14)
 	btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	
 	var style_normal = StyleBoxFlat.new()
@@ -175,7 +246,7 @@ func create_cyber_button(parent: Node, text: String, accent_color: Color, callba
 
 func add_menu_spacer(parent: Node) -> void:
 	var s = Control.new()
-	s.custom_minimum_size = Vector2(0, 10)
+	s.custom_minimum_size = Vector2(0, 8)
 	parent.add_child(s)
 
 class VaporwaveBackground extends Control:
