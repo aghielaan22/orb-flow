@@ -16,6 +16,11 @@ var current_line: Line2D = null
 var current_collision: StaticBody2D = null
 var points: Array = []
 
+# --- GENEROUS JUICE / INK METER VARIABLES ---
+var max_ink: float = 600.0   # Much more generous ink pool for creative drawing paths!
+var current_ink: float = 600.0
+var ink_bar: ProgressBar = null
+
 var orb: RigidBody2D = null
 var spawn_position: Vector2 = Vector2(360, 150)
 
@@ -36,16 +41,17 @@ var shake_intensity: float = 0.0
 
 func _ready() -> void:
 	print("--- DEV CHEATS ACTIVE ---")
-	print("[1-7]: Jump to Level | [N]: Skip Level | [R]: Restart | [ESC]: Pause")
-	print("Orb Flow - Level " + str(current_level) + " Loaded (Streamlined Mode)!")
+	print("[1-10]: Jump to Level | [N]: Skip Level | [R]: Restart | [ESC]: Pause")
+	print("Orb Flow - Level " + str(current_level) + " Loaded (Generous Juice Mode & Terminal Ready)!")
 	setup_audio_system()
 	setup_camera()
 	setup_game_elements()
 	spawn_orb()
-	# Example 1: A hazard starting at X: 360, Y: 400, moving at speed 180, spanning 200 pixels right/left
-	spawn_code_hazard(Vector2(360, 400), 180.0, 200.0, Vector2.RIGHT)
-	# Example 2: Another hazard lower down on the screen moving left
-	spawn_code_hazard(Vector2(360, 700), 220.0, 150.0, Vector2.LEFT)
+	
+	# Add Level Intro Popup if available
+	if ResourceLoader.exists("res://level_intro.gd"):
+		var intro = load("res://level_intro.gd").new(current_level)
+		get_tree().root.add_child(intro)
 
 func setup_camera() -> void:
 	camera = Camera2D.new()
@@ -63,15 +69,11 @@ func trigger_screen_flash(flash_color: Color, duration: float = 0.2) -> void:
 	flash.color = flash_color
 	flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	
-	# Put it on a high canvas layer so it overlays everything
 	var canvas = CanvasLayer.new()
 	canvas.layer = 150
 	canvas.add_child(flash)
-	
-	# Attach to self so it clears automatically when the level reloads
 	add_child(canvas)
 	
-	# Tween to fade out and free
 	var tween = create_tween()
 	tween.tween_property(flash, "modulate:a", 0.0, duration)
 	await tween.finished
@@ -86,6 +88,17 @@ func _process(delta: float) -> void:
 	else:
 		if camera and is_instance_valid(camera):
 			camera.offset = Vector2.ZERO
+
+	# Update code-spawned hazards movement
+	for hazard_data in code_hazards:
+		var node = hazard_data["node"]
+		if node and is_instance_valid(node):
+			var speed = hazard_data["speed"]
+			var span = hazard_data["span"]
+			var origin = hazard_data["origin"]
+			
+			var time_val = Time.get_ticks_msec() / 1000.0
+			node.position.x = origin.x + sin(time_val * (speed / 40.0)) * span
 
 func setup_audio_system() -> void:
 	sfx_player = AudioStreamPlayer.new()
@@ -102,16 +115,16 @@ func play_cyber_sfx(sound_type: String) -> void:
 			freq = 920.0
 		"bounce":
 			duration = 0.06
-			freq = 587.33 # D5 note for crisp bounce
+			freq = 587.33
 		"star":
 			duration = 0.25
-			freq = 1318.51 # E6 high chime for star collection
+			freq = 1318.51
 		"victory":
 			duration = 0.35
 			freq = 1046.50
 		"hazard":
 			duration = 0.25
-			freq = 110.0 # Low sci-fi sub buzz for danger
+			freq = 110.0
 
 	var num_samples = int(sample_rate * duration)
 	var buffer = PackedByteArray()
@@ -119,7 +132,7 @@ func play_cyber_sfx(sound_type: String) -> void:
 	
 	for i in range(num_samples):
 		var t = float(i) / sample_rate
-		var envelope = 1.0 - (float(i) / num_samples) # Fade out smoothly
+		var envelope = 1.0 - (float(i) / num_samples)
 		var wave = sin(t * freq * TAU) * envelope
 		var val = int(wave * 14000)
 		buffer.encode_s16(i * 2, val)
@@ -170,7 +183,6 @@ func setup_game_elements() -> void:
 	var canvas_layer = CanvasLayer.new()
 	canvas_layer.layer = 5
 	
-	# Helper styling function for top bar buttons
 	var top_btn_style = StyleBoxFlat.new()
 	top_btn_style.bg_color = Color(0.06, 0.04, 0.12, 0.9)
 	top_btn_style.border_width_left = 2
@@ -249,6 +261,40 @@ func setup_game_elements() -> void:
 	stars_label.add_theme_font_size_override("font_size", 20)
 	canvas_layer.add_child(stars_label)
 
+	# --- GENEROUS INK / JUICE METER UI (Level 5 & Level 8) ---
+	if current_level == 5 or current_level == 8:
+		var ink_label = Label.new()
+		ink_label.text = "INK JUICE:"
+		ink_label.position = Vector2(25, 95)
+		ink_label.add_theme_color_override("font_color", Color(0.0, 1.0, 0.9))
+		ink_label.add_theme_font_size_override("font_size", 14)
+		canvas_layer.add_child(ink_label)
+
+		ink_bar = ProgressBar.new()
+		ink_bar.position = Vector2(110, 95)
+		ink_bar.custom_minimum_size = Vector2(180, 18)
+		ink_bar.max_value = max_ink
+		ink_bar.value = current_ink
+		ink_bar.show_percentage = false
+		
+		var ink_style_bg = StyleBoxFlat.new()
+		ink_style_bg.bg_color = Color(0.04, 0.02, 0.1, 0.8)
+		ink_style_bg.corner_radius_top_left = 4
+		ink_style_bg.corner_radius_top_right = 4
+		ink_style_bg.corner_radius_bottom_left = 4
+		ink_style_bg.corner_radius_bottom_right = 4
+		
+		var ink_style_fill = StyleBoxFlat.new()
+		ink_style_fill.bg_color = Color(0.0, 1.0, 0.9)
+		ink_style_fill.corner_radius_top_left = 4
+		ink_style_fill.corner_radius_top_right = 4
+		ink_style_fill.corner_radius_bottom_left = 4
+		ink_style_fill.corner_radius_bottom_right = 4
+		
+		ink_bar.add_theme_stylebox_override("background", ink_style_bg)
+		ink_bar.add_theme_stylebox_override("fill", ink_style_fill)
+		canvas_layer.add_child(ink_bar)
+
 	add_child(canvas_layer)
 
 func setup_vaporwave_background() -> void:
@@ -309,32 +355,50 @@ func setup_screen_borders() -> void:
 func setup_level_configuration() -> void:
 	stars.clear()
 	collected_stars = 0
+	code_hazards.clear()
+	current_ink = max_ink
 	
 	match current_level:
 		1:
 			setup_hazard(Vector2(360, 650), Vector2(260, 24))
 			setup_star(Vector2(260, 500))
+		2:
+			setup_hazard(Vector2(360, 500), Vector2(200, 20))
+			setup_star(Vector2(200, 350))
+			setup_star(Vector2(520, 850))
 		3:
-			setup_hazard(Vector2(200, 500), Vector2(240, 20))
-			setup_hazard(Vector2(520, 800), Vector2(240, 20))
-			setup_star(Vector2(180, 450))
-			setup_star(Vector2(560, 950))
+			call_deferred("_route_to_cyber_hangman")
+		4:
+			setup_hazard(Vector2(240, 600), Vector2(220, 20))
+			setup_star(Vector2(360, 400))
 		5:
-			setup_hazard(Vector2(360, 620), Vector2(320, 20))
-			setup_star(Vector2(180, 350))
-			setup_star(Vector2(540, 950))
+			# --- TERMINAL 5 (QUANTUM WELL) — GENEROUS INK & MOVING HAZARDS ---
+			setup_star(Vector2(180, 320))
+			setup_star(Vector2(540, 980))
+			spawn_code_hazard(Vector2(360, 580), 120.0, 240.0, Vector2.RIGHT)
+			spawn_code_hazard(Vector2(360, 820), 140.0, 200.0, Vector2.LEFT)
+		6:
+			call_deferred("_route_to_color_switch")
 		7:
-			setup_hazard(Vector2(240, 500), Vector2(200, 20))
-			setup_hazard(Vector2(480, 820), Vector2(200, 20))
-			setup_star(Vector2(120, 320))
-			setup_star(Vector2(600, 600))
-			setup_star(Vector2(360, 1020))
+			call_deferred("_route_to_cyber_hangman")
+		8:
+			# --- TERMINAL 8 (ICE BREAKER) — LASER GRID PUZZLE ---
+			setup_star(Vector2(200, 320))
+			setup_star(Vector2(520, 880))
+			setup_hazard(Vector2(360, 550), Vector2(420, 18)) # Static ICE Firewall Bar
+			spawn_code_hazard(Vector2(360, 780), 170.0, 240.0, Vector2.RIGHT) # Sweeping Laser Grid Node
 		_:
 			setup_hazard(Vector2(360, 700), Vector2(300, 20))
 			setup_star(Vector2(260, 500))
 		
 	total_level_stars = stars.size()
 	update_stars_ui()
+
+func _route_to_cyber_hangman() -> void:
+	get_tree().change_scene_to_file("res://cyber_hangman.tscn")
+
+func _route_to_color_switch() -> void:
+	get_tree().change_scene_to_file("res://neon_color_switch.tscn")
 
 func setup_hazard(pos: Vector2, size: Vector2) -> void:
 	var hazard_area = Area2D.new()
@@ -354,6 +418,34 @@ func setup_hazard(pos: Vector2, size: Vector2) -> void:
 	
 	hazard_area.body_entered.connect(_on_hazard_entered)
 	add_child(hazard_area)
+
+func spawn_code_hazard(pos: Vector2, speed: float, span: float, dir: Vector2) -> void:
+	var hazard_area = Area2D.new()
+	hazard_area.position = pos
+	
+	var size = Vector2(180, 20)
+	var shape = CollisionShape2D.new()
+	var rect = RectangleShape2D.new()
+	rect.size = size
+	shape.shape = rect
+	hazard_area.add_child(shape)
+	
+	var visual = ColorRect.new()
+	visual.size = size
+	visual.position = -size / 2.0
+	visual.color = Color(1.0, 0.3, 0.0)
+	hazard_area.add_child(visual)
+	
+	hazard_area.body_entered.connect(_on_hazard_entered)
+	add_child(hazard_area)
+	
+	code_hazards.append({
+		"node": hazard_area,
+		"origin": pos,
+		"speed": speed,
+		"span": span,
+		"dir": dir
+	})
 
 func setup_star(pos: Vector2) -> void:
 	var star_area = Area2D.new()
@@ -380,7 +472,7 @@ func setup_star(pos: Vector2) -> void:
 			collected_stars += 1
 			play_cyber_sfx("bounce")
 			play_cyber_sfx("star")
-			trigger_screen_flash(Color(1.0, 0.85, 0.0, 0.4), 0.15) # Gold flash
+			trigger_screen_flash(Color(1.0, 0.85, 0.0, 0.4), 0.15)
 			spawn_success_burst(star_area.global_position, self)
 			star_area.queue_free()
 			update_stars_ui()
@@ -477,12 +569,19 @@ func spawn_success_burst(at_position: Vector2, parent_node: Node) -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
-		if event.keycode >= KEY_1 and event.keycode <= KEY_7:
+		if event.keycode >= KEY_1 and event.keycode <= KEY_9:
 			current_level = event.keycode - KEY_0
-			if current_level in [2, 4, 6]:
+			if current_level == 3 or current_level == 7:
+				get_tree().change_scene_to_file("res://cyber_hangman.tscn")
+			elif current_level == 6:
+				get_tree().change_scene_to_file("res://neon_color_switch.tscn")
+			elif current_level in [2, 4, 9]:
 				get_tree().change_scene_to_file("res://space_shooter.tscn")
 			else:
 				get_tree().reload_current_scene()
+		elif event.keycode == KEY_0:
+			current_level = 10
+			get_tree().reload_current_scene()
 		elif event.keycode == KEY_N:
 			if orb and not is_game_over:
 				var goal_node = get_node_or_null("GoalArea")
@@ -499,12 +598,11 @@ func _input(event: InputEvent) -> void:
 		return
 		
 	if event is InputEventMouseButton or event is InputEventScreenTouch:
-			# Transform local position to canvas coordinates to match scaled viewports
-			var pos = get_canvas_transform().affine_inverse() * event.position
-			if event.pressed:
-				start_drawing(pos)
-			else:
-				stop_drawing()
+		var pos = get_canvas_transform().affine_inverse() * event.position
+		if event.pressed:
+			start_drawing(pos)
+		else:
+			stop_drawing()
 			
 	elif event is InputEventMouseMotion or event is InputEventScreenDrag:
 		if is_drawing:
@@ -554,7 +652,6 @@ func show_pause_screen() -> void:
 	pause_canvas.layer = 100
 	pause_canvas.process_mode = Node.PROCESS_MODE_ALWAYS
 	
-	# Dim backdrop
 	var overlay = ColorRect.new()
 	overlay.color = Color(0.02, 0.01, 0.05, 0.85)
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -564,7 +661,6 @@ func show_pause_screen() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	pause_canvas.add_child(center)
 	
-	# Styled Panel Container for perfect centering & cyberpunk border matching overlays
 	var overlay_panel = PanelContainer.new()
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.06, 0.04, 0.14, 0.95)
@@ -572,7 +668,7 @@ func show_pause_screen() -> void:
 	style.border_width_top = 3
 	style.border_width_right = 3
 	style.border_width_bottom = 3
-	style.border_color = Color(0.0, 0.9, 1.0) # Cyberpunk Cyan
+	style.border_color = Color(0.0, 0.9, 1.0)
 	style.corner_radius_top_left = 10
 	style.corner_radius_top_right = 10
 	style.corner_radius_bottom_left = 10
@@ -601,12 +697,10 @@ func show_pause_screen() -> void:
 	spacer.custom_minimum_size = Vector2(0, 5)
 	vbox.add_child(spacer)
 	
-	# Resume Button
 	create_pause_button(vbox, "▶ RESUME PROTOCOL", Color(0.0, 0.9, 1.0), func():
 		toggle_pause()
 	)
 	
-	# Restart Button
 	create_pause_button(vbox, "↺ RESTART TERMINAL", Color(1.0, 0.0, 0.6), func():
 		get_tree().paused = false
 		if pause_canvas and is_instance_valid(pause_canvas):
@@ -614,7 +708,6 @@ func show_pause_screen() -> void:
 		reset_level()
 	)
 	
-	# Menu Button
 	create_pause_button(vbox, "⌂ MAIN MENU", Color(1.0, 0.0, 0.4), func():
 		get_tree().paused = false
 		if pause_canvas and is_instance_valid(pause_canvas):
@@ -626,9 +719,14 @@ func show_pause_screen() -> void:
 	
 	add_child(pause_canvas)
 
-# --- RESTORED ORIGINAL VICTORY SCREEN ---
 func show_victory_screen() -> void:
 	is_drawing = false
+	
+	if current_level >= 10:
+		get_tree().paused = true
+		var victory_screen = load("res://stage7_victory_overlay.gd").new(total_score)
+		get_tree().root.add_child(victory_screen)
+		return
 	
 	var canvas = CanvasLayer.new()
 	canvas.layer = 10
@@ -672,9 +770,13 @@ func show_victory_screen() -> void:
 	var next_btn = Button.new()
 	var next_target_level = current_level + 1
 	
-	if next_target_level in [2, 4, 6]:
+	if next_target_level == 3 or next_target_level == 7:
+		next_btn.text = " ▶ LAUNCH CYBER HANGMAN (LEVEL " + str(next_target_level) + ") "
+	elif next_target_level == 6:
+		next_btn.text = " ▶ LAUNCH TERMINAL 6 (COLOR SWITCH) "
+	elif next_target_level in [2, 4, 9]:
 		next_btn.text = " ▶ LAUNCH SPACE SHOOTER (LEVEL " + str(next_target_level) + ") "
-	elif next_target_level > 7:
+	elif next_target_level > 10:
 		next_btn.text = " GAME COMPLETED! RESTART "
 	else:
 		next_btn.text = " NEXT TERMINAL (LEVEL " + str(next_target_level) + ") "
@@ -683,11 +785,15 @@ func show_victory_screen() -> void:
 	next_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	next_btn.pressed.connect(func() -> void:
 		current_level += 1
-		if current_level > 7:
+		if current_level > 10:
 			current_level = 1
 			total_score = 0
 			get_tree().change_scene_to_file("res://menu.tscn")
-		elif current_level in [2, 4, 6]:
+		elif current_level == 3 or current_level == 7:
+			get_tree().change_scene_to_file("res://cyber_hangman.tscn")
+		elif current_level == 6:
+			get_tree().change_scene_to_file("res://neon_color_switch.tscn")
+		elif current_level in [2, 4, 9]:
 			get_tree().change_scene_to_file("res://space_shooter.tscn")
 		else:
 			get_tree().reload_current_scene()
@@ -712,6 +818,10 @@ func show_victory_screen() -> void:
 	add_child(canvas)
 
 func start_drawing(pos: Vector2) -> void:
+	if (current_level == 5 or current_level == 8) and current_ink <= 0:
+		play_cyber_sfx("hazard")
+		return
+
 	is_drawing = true
 	points = [pos]
 	
@@ -732,9 +842,18 @@ func add_point_to_line(pos: Vector2) -> void:
 	if points.size() > 0 and pos.distance_to(points[-1]) < 10.0:
 		return
 		
+	var dist = points[-1].distance_to(pos)
+	
+	if current_level == 5 or current_level == 8:
+		if current_ink <= 0:
+			stop_drawing()
+			return
+		current_ink = max(0.0, current_ink - dist)
+		if ink_bar:
+			ink_bar.value = current_ink
+
 	points.append(pos)
 	current_line.add_point(pos)
-	
 	spawn_spark(pos)
 	
 	if points.size() >= 2:
@@ -793,7 +912,7 @@ func _on_goal_entered(body: Node2D) -> void:
 			
 		is_game_over = true
 		play_cyber_sfx("victory")
-		trigger_screen_flash(Color(0.0, 1.0, 0.9, 0.5), 0.4) # Cyan cyber flash
+		trigger_screen_flash(Color(0.0, 1.0, 0.9, 0.5), 0.4)
 		trigger_screen_shake(10.0, 0.35)
 		
 		var goal_node = get_node_or_null("GoalArea")
@@ -815,11 +934,9 @@ func _on_hazard_entered(body: Node2D) -> void:
 	if body == orb and not is_game_over:
 		is_game_over = true
 		play_cyber_sfx("hazard")
-		trigger_screen_flash(Color(1.0, 0.0, 0.4, 0.6), 0.3) # Crimson
+		trigger_screen_flash(Color(1.0, 0.0, 0.4, 0.6), 0.3)
 		trigger_screen_shake(12.0, 0.4)
 		print("OOF! Orb hit a hazard or went out of bounds!")
-		
-		# Safely defer the reset to prevent physics callback crashes
 		call_deferred("reset_level")
 
 func submit_score_to_huawei_leaderboard(score: int) -> void:
@@ -882,39 +999,9 @@ class VaporwaveBackground extends Control:
 			draw_line(peaks[i], peaks[i+1], wire_color, 2.0)
 
 		draw_rect(Rect2(0, horizon_y, sz.x, sz.y - horizon_y), Color(0.02, 0.01, 0.06))
-		draw_line(Vector2(0, horizon_y), Vector2(sz.x, horizon_y), Color(0.0, 1.0, 0.9), 3.0)
+		draw_line(Vector2(0, horizon_y), Vector2(sz.x, horizon_y), Color(0.0, 0.9, 1.0), 3.0)
 		
-		var num_lines = 12
-		for i in range(num_lines):
-			var progress = fmod((float(i) + scroll_offset / 40.0), num_lines) / num_lines
-			var y = horizon_y + pow(progress, 2.0) * (sz.y - horizon_y)
-			var alpha = progress * 0.7
-			draw_line(Vector2(0, y), Vector2(sz.x, y), Color(0.0, 0.9, 1.0, alpha), 1.5)
-
-func spawn_code_hazard(spawn_pos: Vector2, speed: float, limit: float, direction: Vector2) -> void:
-	var hazard = Area2D.new()
-	# Load and attach your moving_hazard.gd script
-	hazard.set_script(load("res://moving_hazard.gd"))
-	hazard.position = spawn_pos
-	
-	# Pass the custom parameters into the hazard script variables
-	hazard.move_speed = speed
-	hazard.travel_limit = limit
-	hazard.move_direction = direction
-	
-	# Add it to the scene tree
-	add_child(hazard)
-	
-	# Call the visual setup function inside the hazard script
-	if hazard.has_method("setup_visual"):
-		hazard.setup_visual()
-		
-	# Track it in our array
-	code_hazards.append(hazard)
-
-func start_bonus_minigame() -> void:
-	get_tree().change_scene_to_file("res://space_shooter.tscn")
-
-func complete_level_one() -> void:
-	print("Level 1 Complete! Launching Space Shooter (Level 2)")
-	get_tree().change_scene_to_file("res://space_shooter.tscn")
+		var grid_step = 40.0
+		for i in range(int(sz.x / grid_step) + 5):
+			var x_pos = (i * grid_step) - fmod(scroll_offset * 2.0, grid_step)
+			draw_line(Vector2(x_pos, horizon_y), Vector2((x_pos - sz.x * 0.5) * 1.8 + sz.x * 0.5, sz.y), Color(1.0, 0.0, 0.6, 0.15), 1.5)

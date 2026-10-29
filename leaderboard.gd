@@ -1,15 +1,13 @@
 extends Control
-# leaderboard.gd - Huawei Game Service Leaderboard Integration UI
+# leaderboard.gd - Cyberpunk Leaderboard Integration UI
 
 var score_list: VBoxContainer = null
 var back_button: Button = null
 
 var sample_leaderboard_data = [
-	{"rank": 1, "name": "Aghielaan22", "score": 9850},
-	{"rank": 2, "name": "K-Corp_Agent", "score": 8720},
-	{"rank": 3, "name": "CyberRunner", "score": 7400},
-	{"rank": 4, "name": "NeonOrb", "score": 6150},
-	{"rank": 5, "name": "Player_Zero", "score": 5200}
+	{"rank": 1, "name": "NEO", "score": 35, "date": "2026-10-01"},
+	{"rank": 2, "name": "CYB", "score": 25, "date": "2026-10-02"},
+	{"rank": 3, "name": "TRN", "score": 15, "date": "2026-10-03"}
 ]
 
 func _ready() -> void:
@@ -52,12 +50,12 @@ func setup_leaderboard_ui() -> void:
 
 	var vbox = VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.custom_minimum_size = Vector2(500, 700)
+	vbox.custom_minimum_size = Vector2(520, 720)
 	vbox.add_theme_constant_override("separation", 20)
 	center_container.add_child(vbox)
 
 	var title_label = Label.new()
-	title_label.text = "GLOBAL LEADERBOARD"
+	title_label.text = "HMS LEADERBOARD"
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	title_label.add_theme_font_size_override("font_size", 36)
@@ -65,7 +63,7 @@ func setup_leaderboard_ui() -> void:
 	vbox.add_child(title_label)
 
 	var subtitle_label = Label.new()
-	subtitle_label.text = "// HUAWEI GAME SERVICE //"
+	subtitle_label.text = "// TOP CYBERPUNK OPERATIVES //"
 	subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	subtitle_label.add_theme_font_size_override("font_size", 14)
@@ -73,13 +71,13 @@ func setup_leaderboard_ui() -> void:
 	vbox.add_child(subtitle_label)
 
 	var spacer = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 15)
+	spacer.custom_minimum_size = Vector2(0, 10)
 	vbox.add_child(spacer)
 
 	var panel_container = PanelContainer.new()
 	panel_container.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	var panel_style = StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.06, 0.04, 0.12, 0.85)
+	panel_style.bg_color = Color(0.06, 0.04, 0.12, 0.88)
 	panel_style.border_width_left = 2
 	panel_style.border_width_top = 2
 	panel_style.border_width_right = 2
@@ -89,24 +87,24 @@ func setup_leaderboard_ui() -> void:
 	panel_style.corner_radius_top_right = 8
 	panel_style.corner_radius_bottom_left = 8
 	panel_style.corner_radius_bottom_right = 8
-	panel_style.content_margin_left = 25
-	panel_style.content_margin_right = 25
-	panel_style.content_margin_top = 20
-	panel_style.content_margin_bottom = 20
+	panel_style.content_margin_left = 20
+	panel_style.content_margin_right = 20
+	panel_style.content_margin_top = 18
+	panel_style.content_margin_bottom = 18
 	panel_container.add_theme_stylebox_override("panel", panel_style)
 	vbox.add_child(panel_container)
 
 	score_list = VBoxContainer.new()
-	score_list.add_theme_constant_override("separation", 12)
+	score_list.add_theme_constant_override("separation", 10)
 	panel_container.add_child(score_list)
 
 	var spacer2 = Control.new()
-	spacer2.custom_minimum_size = Vector2(0, 15)
+	spacer2.custom_minimum_size = Vector2(0, 10)
 	vbox.add_child(spacer2)
 
 	back_button = Button.new()
-	back_button.text = " BACK TO MENU "
-	back_button.custom_minimum_size = Vector2(320, 50)
+	back_button.text = "« BACK TO MAIN TERMINAL"
+	back_button.custom_minimum_size = Vector2(340, 50)
 	back_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	back_button.add_theme_font_size_override("font_size", 16)
 	back_button.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
@@ -137,62 +135,62 @@ func _populate_scores() -> void:
 	for child in score_list.get_children():
 		child.queue_free()
 		
-	# Load actual saved scores if they exist, otherwise fallback to sample data
-	var display_data = []
-	var saved_scores = _load_actual_high_scores()
+	# Header Row
+	var header = Label.new()
+	header.text = "RANK    OPERATIVE    SCORE      DATE"
+	header.add_theme_font_size_override("font_size", 13)
+	header.add_theme_color_override("font_color", Color(1.0, 0.0, 0.6))
+	score_list.add_child(header)
 	
-	if saved_scores.size() > 0 and saved_scores[0] > 0:
-		var names = ["Aghielaan22", "CyberRunner", "NeonAgent", "GridRunner", "Player_Zero"]
-		for i in range(saved_scores.size()):
-			if saved_scores[i] > 0:
-				display_data.append({
-					"rank": i + 1,
-					"name": names[i] if i < names.size() else "Player",
-					"score": saved_scores[i]
-				})
-	
-	if display_data.size() == 0:
-		display_data = sample_leaderboard_data
+	var line = ColorRect.new()
+	line.custom_minimum_size = Vector2(0, 2)
+	line.color = Color(1.0, 0.0, 0.6, 0.5)
+	score_list.add_child(line)
 
-	for entry in display_data:
+	# Fetch scores from ScoreManager (with fallback to sample data if empty)
+	var records = ScoreManager.load_scores() if ClassDB.class_exists("ScoreManager") else []
+	if records.is_empty():
+		records = sample_leaderboard_data
+
+	for i in range(records.size()):
+		var entry = records[i]
+		var rank_str = "#" + str(i + 1)
+		if i == 0: 
+			rank_str = "👑 1"
+		
 		var row = HBoxContainer.new()
-		row.custom_minimum_size = Vector2(380, 30)
-		row.add_theme_constant_override("separation", 20)
+		row.custom_minimum_size = Vector2(440, 30)
+		row.add_theme_constant_override("separation", 15)
 		
 		var rank_lbl = Label.new()
-		rank_lbl.text = "#%d" % entry["rank"]
+		rank_lbl.text = rank_str
 		rank_lbl.custom_minimum_size = Vector2(60, 0)
-		rank_lbl.add_theme_font_size_override("font_size", 16)
-		rank_lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0) if entry["rank"] <= 3 else Color(0.8, 0.8, 0.8))
+		rank_lbl.add_theme_font_size_override("font_size", 15)
+		rank_lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0) if i == 0 else Color(0.8, 0.8, 0.8))
 		row.add_child(rank_lbl)
 		
 		var name_lbl = Label.new()
-		name_lbl.text = entry["name"]
-		name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		name_lbl.add_theme_font_size_override("font_size", 16)
+		name_lbl.text = str(entry.get("name", "AAA"))
+		name_lbl.custom_minimum_size = Vector2(90, 0)
+		name_lbl.add_theme_font_size_override("font_size", 15)
 		name_lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 		row.add_child(name_lbl)
 		
 		var score_lbl = Label.new()
-		score_lbl.text = str(entry["score"])
-		score_lbl.add_theme_font_size_override("font_size", 16)
+		score_lbl.text = str(entry.get("score", 0))
+		score_lbl.custom_minimum_size = Vector2(70, 0)
+		score_lbl.add_theme_font_size_override("font_size", 15)
 		score_lbl.add_theme_color_override("font_color", Color(0.0, 0.9, 1.0))
 		row.add_child(score_lbl)
+
+		var date_lbl = Label.new()
+		date_lbl.text = str(entry.get("date", "2026-10-01"))
+		date_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		date_lbl.add_theme_font_size_override("font_size", 13)
+		date_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
+		row.add_child(date_lbl)
 		
 		score_list.add_child(row)
-
-func _load_actual_high_scores() -> Array:
-	const SAVE_PATH = "user://cyber_leaderboard.save"
-	if not FileAccess.file_exists(SAVE_PATH):
-		return []
-		
-	var file = FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if file:
-		var scores = file.get_var()
-		if scores is Array:
-			return scores
-			
-	return []
 
 func _on_back_pressed() -> void:
 	var target_scene = "res://menu.tscn"

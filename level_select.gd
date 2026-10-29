@@ -3,7 +3,6 @@ extends Control
 var sfx_player: AudioStreamPlayer = null
 
 func _ready() -> void:
-	# CRITICAL FIX: Force the root Control node to cover the full screen window
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	
 	sfx_player = AudioStreamPlayer.new()
@@ -60,56 +59,66 @@ func setup_level_select_ui() -> void:
 
 	var vbox = VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.custom_minimum_size = Vector2(460, 800)
+	vbox.custom_minimum_size = Vector2(480, 920)
 	center_container.add_child(vbox)
 
 	var title_label = Label.new()
-	title_label.text = "TERMINAL SELECT"
+	title_label.text = "MAINFRAME SELECT"
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	title_label.add_theme_font_size_override("font_size", 42)
+	title_label.add_theme_font_size_override("font_size", 38)
 	title_label.add_theme_color_override("font_color", Color(0.0, 0.95, 1.0))
 	vbox.add_child(title_label)
 
 	var subtitle_label = Label.new()
-	subtitle_label.text = "// CHOOSE DECRYPTION TARGET //"
+	subtitle_label.text = "// CHOOSE DECRYPTION TARGET (1 - 10) //"
 	subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	subtitle_label.add_theme_font_size_override("font_size", 14)
+	subtitle_label.add_theme_font_size_override("font_size", 13)
 	subtitle_label.add_theme_color_override("font_color", Color(1.0, 0.0, 0.6))
 	vbox.add_child(subtitle_label)
 
 	var spacer = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 25)
+	spacer.custom_minimum_size = Vector2(0, 15)
 	vbox.add_child(spacer)
 
+	# Scrollable container so 10 terminals fit nicely on any screen height
+	var scroll = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(460, 650)
+	scroll.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	vbox.add_child(scroll)
+
 	var grid_center = CenterContainer.new()
-	grid_center.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	vbox.add_child(grid_center)
+	grid_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(grid_center)
 
 	var grid = GridContainer.new()
 	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 20)
-	grid.add_theme_constant_override("v_separation", 20)
+	grid.add_theme_constant_override("h_separation", 16)
+	grid.add_theme_constant_override("v_separation", 16)
 	grid_center.add_child(grid)
 
-	var level_descriptions = [
-		"Terminal 1: Calibration",
-		"Terminal 2: Space Shooter",
-		"Terminal 3: Complex Mesh",
-		"Terminal 4: Space Shooter",
-		"Terminal 5: Double Well",
-		"Terminal 6: Space Shooter",
-		"Terminal 7: Final Core"
+	var level_data = [
+		{"name": "Calibration", "type": "PUZZLE", "scene": "res://main.tscn"},
+		{"name": "Interceptor", "type": "ARCADE", "scene": "res://space_shooter.tscn"},
+		{"name": "Security Bypass", "type": "HANGMAN", "scene": "res://cyber_hangman.tscn"},
+		{"name": "Sector Breach", "type": "ARCADE", "scene": "res://space_shooter.tscn"},
+		{"name": "Quantum Well", "type": "PUZZLE", "scene": "res://main.tscn"},
+		{"name": "Frequency Switch", "type": "SWITCH", "scene": "res://cyber_color_switch.tscn"},
+		{"name": "Data Matrix", "type": "MEMORY", "scene": "res://memory_matrix.tscn"},
+		{"name": "ICE Breaker", "type": "CIRCUIT", "scene": "res://laser_puzzle.tscn"},
+		{"name": "Overdrive", "type": "BOSS", "scene": "res://boss_shooter.tscn"},
+		{"name": "Core Mainframe", "type": "FINALE", "scene": "res://main_core.tscn"}
 	]
 
-	# Loop through 1 to 7 terminals
-	for i in range(1, 8):
+	for i in range(level_data.size()):
+		var lvl_info = level_data[i]
+		var target_lvl = i + 1
+		
 		var lvl_btn = Button.new()
-		var prefix = "🚀 ARCADE 0" if i in [2, 4, 6] else "🔵 PUZZLE 0"
-		lvl_btn.text = prefix + str(i) + "\n" + level_descriptions[i-1].split(":")[1].strip_edges()
-		lvl_btn.custom_minimum_size = Vector2(215, 80)
-		lvl_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		var prefix = "⚡ " if lvl_info["type"] == "SWITCH" else ("🚀 " if lvl_info["type"] == "ARCADE" else "🔵 ")
+		lvl_btn.text = prefix + "TERM " + ("0" + str(target_lvl) if target_lvl < 10 else str(target_lvl)) + "\n" + lvl_info["name"]
+		lvl_btn.custom_minimum_size = Vector2(215, 75)
 		lvl_btn.add_theme_font_size_override("font_size", 13)
 		lvl_btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 		
@@ -119,12 +128,18 @@ func setup_level_select_ui() -> void:
 		style.border_width_top = 2
 		style.border_width_right = 2
 		style.border_width_bottom = 2
-		# Distinct color coding: Orange for Space Shooter, Cyan/Pink for Physics Puzzles
-		if i in [2, 4, 6]:
-			style.border_color = Color(1.0, 0.5, 0.0)
-		else:
-			style.border_color = Color(0.0, 0.9, 1.0) if i <= 3 else Color(1.0, 0.0, 0.6)
-			
+		
+		# Color coding per game type
+		match lvl_info["type"]:
+			"ARCADE", "BOSS":
+				style.border_color = Color(1.0, 0.5, 0.0) # Orange
+			"SWITCH":
+				style.border_color = Color(1.0, 0.85, 0.0) # Electric Yellow
+			"HANGMAN", "MEMORY":
+				style.border_color = Color(1.0, 0.0, 0.6) # Neon Pink
+			_:
+				style.border_color = Color(0.0, 0.9, 1.0) # Cyber Cyan
+				
 		style.corner_radius_top_left = 6
 		style.corner_radius_top_right = 6
 		style.corner_radius_bottom_left = 6
@@ -134,30 +149,30 @@ func setup_level_select_ui() -> void:
 		lvl_btn.add_theme_stylebox_override("hover", style)
 		lvl_btn.add_theme_stylebox_override("pressed", style)
 		
-		var target_lvl = i
 		lvl_btn.pressed.connect(func():
 			play_click_sfx()
 			var main_script = load("res://main.gd")
 			if main_script:
 				main_script.current_level = target_lvl
 				
-			# Correct Scene Routing: Levels 2, 4, 6 load Space Shooter; others load Physics Ball Game
-			if target_lvl in [2, 4, 6]:
-				get_tree().change_scene_to_file("res://space_shooter.tscn")
+			var scene_path = lvl_info["scene"]
+			if ResourceLoader.exists(scene_path):
+				get_tree().change_scene_to_file(scene_path)
 			else:
-				get_tree().change_scene_to_file("res://main.tscn")
+				# Fallback if new mini-game scene isn't created yet
+				get_tree().change_scene_to_file("res://cyber_color_switch.tscn" if target_lvl == 6 else "res://main.tscn")
 		)
 		grid.add_child(lvl_btn)
 
 	var spacer2 = Control.new()
-	spacer2.custom_minimum_size = Vector2(0, 30)
+	spacer2.custom_minimum_size = Vector2(0, 15)
 	vbox.add_child(spacer2)
 
 	var back_btn = Button.new()
 	back_btn.text = " BACK TO MAIN MENU "
-	back_btn.custom_minimum_size = Vector2(320, 50)
+	back_btn.custom_minimum_size = Vector2(320, 48)
 	back_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	back_btn.add_theme_font_size_override("font_size", 16)
+	back_btn.add_theme_font_size_override("font_size", 15)
 	back_btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	
 	var back_style = StyleBoxFlat.new()

@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://d4iiwth08femk"]
+
+[ext_resource type="Script" uid="uid://dnrs3egmbom3p" path="res://cyber_hangman.gd" id="1_lfe58"]
+
+[node name="Control" type="Control" unique_id=1639952950]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_lfe58")

@@ -12,11 +12,11 @@ var screen_size: Vector2 = Vector2(720, 1280)
 var player_ship: Node = null
 var enemies: Array = []
 var enemy_bullets: Array = []
-var hazards: Array = []
+var green_obstacles: Array = [] # Terminal 9 Green Entities
 
 var spawn_timer: float = 0.0
 var enemy_fire_timer: float = 0.0
-var hazard_timer: float = 0.0
+var obstacle_spawn_timer: float = 0.0
 
 var score_label: Label = null
 var target_label: Label = null
@@ -28,6 +28,9 @@ var max_escaped_allowed: int = 3
 var is_game_over: bool = false
 var is_paused: bool = false
 
+# Touch dragging state for smooth single-finger glide steering
+var is_dragging_player: bool = false
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	
@@ -38,7 +41,7 @@ func _ready() -> void:
 	match main_game_level():
 		2: target_score = 15
 		4: target_score = 25
-		6: target_score = 35
+		9: target_score = 40  # Terminal 9 Overdrive Target
 		_: target_score = 20
 
 	setup_matrix_background()
@@ -48,7 +51,13 @@ func _ready() -> void:
 	player_ship = get_node_or_null("PlayerShip")
 	
 	print("[Space Shooter] Initialized Level ", main_game_level(), " | Target Score: ", target_score)
-
+	
+	# Add Level Intro Popup for Space Shooter (using main_game_level())
+	if ResourceLoader.exists("res://level_intro.gd"):
+		var current_lvl = main_game_level()
+		var intro = load("res://level_intro.gd").new(current_lvl)
+		get_tree().root.add_child(intro)
+	
 func main_game_level() -> int:
 	var main_script = load("res://main.gd")
 	if main_script and "current_level" in main_script:
@@ -71,6 +80,38 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_tree().reload_current_scene()
 			elif event.keycode == KEY_N:
 				on_victory()
+	
+	# Handle single-finger drag / glide steering in the upper game area
+	elif event is InputEventScreenTouch:
+		if event.pressed:
+			if event.position.y < screen_size.y - 220:
+				is_dragging_player = true
+				update_glide_position(event.position.x)
+		else:
+			is_dragging_player = false
+			input_dir = 0.0
+	elif event is InputEventScreenDrag and is_dragging_player:
+		if event.position.y < screen_size.y - 220:
+			update_glide_position(event.position.x)
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed and event.position.y < screen_size.y - 220:
+			is_dragging_player = true
+			update_glide_position(event.position.x)
+		elif not event.pressed:
+			is_dragging_player = false
+			input_dir = 0.0
+	elif event is InputEventMouseMotion and is_dragging_player:
+		if event.position.y < screen_size.y - 220:
+			update_glide_position(event.position.x)
+
+func update_glide_position(touch_x: float) -> void:
+	if not is_instance_valid(player_ship):
+		return
+	var diff = touch_x - player_ship.position.x
+	if abs(diff) > 5.0:
+		input_dir = sign(diff) * min(abs(diff) / 30.0, 1.5)
+	else:
+		input_dir = 0.0
 
 func toggle_pause_menu() -> void:
 	if is_game_over:
@@ -159,24 +200,39 @@ func create_overlay_button(parent: Node, text: String, border_color: Color, call
 	btn.pressed.connect(callback)
 	parent.add_child(btn)
 
+var level_time_elapsed: float = 0.0
+
 func handle_spawning(delta: float) -> void:
-	var spawn_rate = 1.2 if main_game_level() == 2 else (0.9 if main_game_level() == 4 else 0.6)
+	level_time_elapsed += delta
+	
+	# Progressive spawn rates based on stage difficulty
+	var base_spawn_rate = 1.2
+	if main_game_level() == 4:
+		base_spawn_rate = 0.85
+	elif main_game_level() == 9:
+		base_spawn_rate = 0.45 # High-intensity Overdrive spawn rate
+	elif main_game_level() >= 6:
+		base_spawn_rate = 0.55
+		
 	spawn_timer += delta
-	if spawn_timer >= spawn_rate:
+	if spawn_timer >= base_spawn_rate:
 		spawn_timer = 0.0
 		spawn_enemy()
 
+	# Terminal 9: Spawn Green Obstacles / Entities
+	if main_game_level() == 9:
+		obstacle_spawn_timer += delta
+		if obstacle_spawn_timer >= 1.8:
+			obstacle_spawn_timer = 0.0
+			spawn_green_obstacle()
+
+	# Enemy firing frequency scales up in higher terminals
 	if main_game_level() >= 4:
+		var fire_interval = 1.4 if main_game_level() == 4 else (0.7 if main_game_level() == 9 else 1.0)
 		enemy_fire_timer += delta
-		if enemy_fire_timer >= 1.5:
+		if enemy_fire_timer >= fire_interval:
 			enemy_fire_timer = 0.0
 			enemy_shoot_bullet()
-
-	if main_game_level() == 6:
-		hazard_timer += delta
-		if hazard_timer >= 2.5:
-			hazard_timer = 0.0
-			spawn_green_hazard()
 
 func spawn_enemy() -> void:
 	var enemy = Area2D.new()
@@ -213,6 +269,43 @@ func spawn_enemy() -> void:
 	add_child(enemy)
 	enemies.append(enemy)
 
+func spawn_green_obstacle() -> void:
+	var obstacle = Area2D.new()
+	obstacle.name = "GreenObstacle"
+	
+	var spawn_x = randf_range(80, screen_size.x - 80)
+	obstacle.position = Vector2(spawn_x, -50)
+
+	var shape = CollisionShape2D.new()
+	var rect = RectangleShape2D.new()
+	rect.size = Vector2(50, 50)
+	shape.shape = rect
+	obstacle.add_child(shape)
+
+	var visual = Line2D.new()
+	visual.width = 4.0
+	visual.default_color = Color(0.0, 1.0, 0.4) # Glowing green entity obstacle
+	var box_points = [
+		Vector2(-25, -25), Vector2(25, -25),
+		Vector2(25, 25), Vector2(-25, 25), Vector2(-25, -25)
+	]
+	for p in box_points:
+		visual.add_point(p)
+	obstacle.add_child(visual)
+
+	obstacle.body_entered.connect(func(body):
+		if is_game_over: return
+		if body.name == "PlayerShip" or "Player" in body.name or body is CharacterBody2D:
+			on_player_hit()
+	)
+	obstacle.area_entered.connect(func(area):
+		if "Bullet" in area.name or area.is_in_group("bullets"):
+			if is_instance_valid(area): area.queue_free()
+	)
+
+	add_child(obstacle)
+	green_obstacles.append(obstacle)
+
 func _on_enemy_body_entered(body: Node, _enemy: Area2D) -> void:
 	if is_game_over:
 		return
@@ -223,13 +316,13 @@ func _on_enemy_area_entered(area: Area2D, enemy: Area2D) -> void:
 	if is_game_over or not is_instance_valid(enemy):
 		return
 		
-	# Ignore enemy bullets so enemies don't hit themselves
 	if "Enemy" in area.name:
 		return
 
 	if area.is_in_group("bullets") or "Bullet" in area.name or "bullet" in area.name:
 		if is_instance_valid(area):
 			area.queue_free()
+			
 		score += 1
 		update_ui()
 		
@@ -256,64 +349,19 @@ func enemy_shoot_bullet() -> void:
 
 	var shape = CollisionShape2D.new()
 	var circle = CircleShape2D.new()
-	circle.radius = 12.0
+	circle.radius = 16.0 
 	shape.shape = circle
 	bullet.add_child(shape)
 
 	var visual = Line2D.new()
-	visual.width = 10.0
-	visual.default_color = Color(1.0, 0.5, 0.0)
-	visual.add_point(Vector2(0, -5))
-	visual.add_point(Vector2(0, 5))
+	visual.width = 14.0
+	visual.default_color = Color(1.0, 0.8, 0.0) 
+	visual.add_point(Vector2(0, -8))
+	visual.add_point(Vector2(0, 8))
 	bullet.add_child(visual)
 
 	add_child(bullet)
 	enemy_bullets.append(bullet)
-
-func spawn_green_hazard() -> void:
-	var hazard = Area2D.new()
-	hazard.name = "GreenHazard"
-	var spawn_x = randf_range(80, screen_size.x - 80)
-	hazard.position = Vector2(spawn_x, -40)
-
-	var shape = CollisionShape2D.new()
-	var circle = CircleShape2D.new()
-	circle.radius = 30.0
-	shape.shape = circle
-	hazard.add_child(shape)
-
-	var visual = Line2D.new()
-	visual.width = 5.0
-	visual.default_color = Color(0.2, 1.0, 0.2)
-	for i in range(9):
-		var angle = i * (PI * 2 / 8)
-		visual.add_point(Vector2(cos(angle) * 18, sin(angle) * 18))
-	hazard.add_child(visual)
-
-	hazard.body_entered.connect(_on_hazard_body_entered.bind(hazard))
-	hazard.area_entered.connect(_on_hazard_area_entered.bind(hazard))
-
-	add_child(hazard)
-	hazards.append(hazard)
-
-func _on_hazard_body_entered(body: Node, _hazard: Area2D) -> void:
-	if is_game_over:
-		return
-	if body.name == "PlayerShip" or "Player" in body.name or body is CharacterBody2D:
-		on_player_hit()
-
-func _on_hazard_area_entered(area: Area2D, hazard: Area2D) -> void:
-	if is_game_over or not is_instance_valid(hazard):
-		return
-	if area.is_in_group("bullets") or "Bullet" in area.name or "bullet" in area.name:
-		if is_instance_valid(area):
-			area.queue_free()
-		score = max(0, score - 3)
-		update_ui()
-		spawn_hit_spark(hazard.global_position, Color(0.2, 1.0, 0.2))
-		if hazard in hazards:
-			hazards.erase(hazard)
-		hazard.queue_free()
 
 func spawn_hit_spark(pos: Vector2, spark_color: Color) -> void:
 	var spark = CPUParticles2D.new()
@@ -328,7 +376,7 @@ func spawn_hit_spark(pos: Vector2, spark_color: Color) -> void:
 	spark.scale_amount_min = 4.0
 	spark.scale_amount_max = 7.0
 	spark.color = spark_color
-	spark.process_mode = Node.PROCESS_MODE_ALWAYS # Keep playing even when paused
+	spark.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(spark)
 	
 	var timer = get_tree().create_timer(0.4)
@@ -339,7 +387,6 @@ func _on_spark_timeout(spark: CPUParticles2D) -> void:
 		spark.queue_free()
 
 func update_projectiles_and_enemies(delta: float) -> void:
-	# Defense Red Line threshold position
 	var red_line_y = screen_size.y - 190.0
 
 	for i in range(enemies.size() - 1, -1, -1):
@@ -358,13 +405,30 @@ func update_projectiles_and_enemies(delta: float) -> void:
 		else:
 			enemies.remove_at(i)
 
+	# Update Terminal 9 Green Obstacles movement
+	for i in range(green_obstacles.size() - 1, -1, -1):
+		var obs = green_obstacles[i]
+		if is_instance_valid(obs):
+			obs.position.y += 280.0 * delta
+			if is_instance_valid(player_ship):
+				if obs.global_position.distance_to(player_ship.global_position) < 40.0:
+					obs.queue_free()
+					green_obstacles.remove_at(i)
+					on_player_hit()
+					continue
+			if obs.position.y > screen_size.y + 100:
+				obs.queue_free()
+				green_obstacles.remove_at(i)
+		else:
+			green_obstacles.remove_at(i)
+
 	for i in range(enemy_bullets.size() - 1, -1, -1):
 		var b = enemy_bullets[i]
 		if is_instance_valid(b):
-			b.position.y += 450.0 * delta
+			b.position.y += 480.0 * delta
 			
 			if is_instance_valid(player_ship):
-				if b.global_position.distance_to(player_ship.global_position) < 35.0:
+				if b.global_position.distance_to(player_ship.global_position) < 38.0:
 					b.queue_free()
 					enemy_bullets.remove_at(i)
 					on_player_hit()
@@ -376,38 +440,31 @@ func update_projectiles_and_enemies(delta: float) -> void:
 		else:
 			enemy_bullets.remove_at(i)
 
-	for i in range(hazards.size() - 1, -1, -1):
-		var h = hazards[i]
-		if is_instance_valid(h):
-			h.position.y += 180.0 * delta
-			if h.position.y > screen_size.y + 100:
-				h.queue_free()
-				hazards.remove_at(i)
-		else:
-			hazards.remove_at(i)
-
 func on_player_hit() -> void:
 	if is_game_over:
 		return
 	is_game_over = true
 	
-	# Spawn explosion spark at player ship position and remove ship with visual flair
 	if is_instance_valid(player_ship):
 		spawn_hit_spark(player_ship.global_position, Color(0.0, 0.9, 1.0))
 		player_ship.queue_free()
 	
 	get_tree().paused = true
-	var gameover_overlay = load("res://game_overlays.gd").new(false, main_game_level(), score)
 	
-	gameover_overlay.retry_clicked.connect(func(): 
-		get_tree().paused = false
-		get_tree().reload_current_scene()
+	var name_popup = load("res://name_entry_overlay.gd").new(score)
+	name_popup.name_submitted.connect(func(_name):
+		var gameover_overlay = load("res://game_overlays.gd").new(false, main_game_level(), score)
+		gameover_overlay.retry_clicked.connect(func(): 
+			get_tree().paused = false
+			get_tree().reload_current_scene()
+		)
+		gameover_overlay.menu_clicked.connect(func(): 
+			get_tree().paused = false
+			get_tree().change_scene_to_file("res://menu.tscn")
+		)
+		get_tree().root.add_child(gameover_overlay)
 	)
-	gameover_overlay.menu_clicked.connect(func(): 
-		get_tree().paused = false
-		get_tree().change_scene_to_file("res://menu.tscn")
-	)
-	get_tree().root.add_child(gameover_overlay)
+	get_tree().root.add_child(name_popup)
 
 func on_victory() -> void:
 	if is_game_over:
@@ -428,7 +485,11 @@ func on_victory() -> void:
 		if main_script:
 			main_script.current_level = next_lvl
 		
-		if next_lvl in [2, 4, 6]:
+		if next_lvl == 3:
+			get_tree().change_scene_to_file("res://cyber_hangman.tscn")
+		elif next_lvl == 6:
+			get_tree().change_scene_to_file("res://neon_color_switch.tscn")
+		elif next_lvl in [2, 4, 9]:
 			get_tree().change_scene_to_file("res://space_shooter.tscn")
 		else:
 			get_tree().change_scene_to_file("res://main.tscn")
@@ -461,7 +522,6 @@ func setup_ui() -> void:
 	defense_label.add_theme_color_override("font_color", Color(1.0, 0.2, 0.2))
 	canvas.add_child(defense_label)
 
-	# Pause Button (Top Right)
 	var pause_btn = Button.new()
 	pause_btn.text = "❚❚"
 	pause_btn.custom_minimum_size = Vector2(50, 50)
@@ -476,7 +536,6 @@ func setup_ui() -> void:
 	pause_btn.pressed.connect(func(): toggle_pause_menu())
 	canvas.add_child(pause_btn)
 
-	# --- EXTRA-THICK DEFENSE RED LINE VISUAL (Width: 10.0) ---
 	var red_line_y = screen_size.y - 190.0
 	var red_line = Line2D.new()
 	red_line.width = 10.0
@@ -485,25 +544,8 @@ func setup_ui() -> void:
 	red_line.add_point(Vector2(screen_size.x, red_line_y))
 	canvas.add_child(red_line)
 
-	# --- VIRTUAL ARCADE CONTROLS ---
-	
-	# Left Button (Bottom Left) - Size 95x85
-	var left_btn = create_control_button("◄", Vector2(40, screen_size.y - 145), Vector2(95, 85), Color(0.0, 0.9, 1.0))
-	left_btn.add_theme_font_size_override("font_size", 34)
-	left_btn.button_down.connect(func(): input_dir = -1.0)
-	left_btn.button_up.connect(func(): if input_dir == -1.0: input_dir = 0.0)
-	canvas.add_child(left_btn)
-
-	# Right Button (Bottom Left, beside Left) - Size 95x85
-	var right_btn = create_control_button("►", Vector2(145, screen_size.y - 145), Vector2(95, 85), Color(0.0, 0.9, 1.0))
-	right_btn.add_theme_font_size_override("font_size", 34)
-	right_btn.button_down.connect(func(): input_dir = 1.0)
-	right_btn.button_up.connect(func(): if input_dir == 1.0: input_dir = 0.0)
-	canvas.add_child(right_btn)
-
-	# Fire Button (Bottom Right) - Size 115x85
-	var shoot_btn = create_control_button("FIRE", Vector2(screen_size.x - 135, screen_size.y - 145), Vector2(115, 85), Color(1.0, 0.0, 0.5))
-	shoot_btn.add_theme_font_size_override("font_size", 24)
+	var shoot_btn = create_control_button("FIRE", Vector2(screen_size.x - 180, screen_size.y - 145), Vector2(160, 85), Color(1.0, 0.0, 0.5))
+	shoot_btn.add_theme_font_size_override("font_size", 28)
 	shoot_btn.button_down.connect(func(): firing_pressed = true)
 	shoot_btn.button_up.connect(func(): firing_pressed = false)
 	canvas.add_child(shoot_btn)

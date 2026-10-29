@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://c8fhd4bis77iw"]
+
+[ext_resource type="Script" uid="uid://cuw1lvfwenurv" path="res://neon_color_switch.gd" id="1_xh6yx"]
+
+[node name="Control" type="Control" unique_id=1494916443]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_xh6yx")
