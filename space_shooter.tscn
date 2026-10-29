@@ -9,11 +9,6 @@
 [node name="SpaceShooter" type="Node2D" unique_id=1807301991 groups=["enemies"]]
 script = ExtResource("1_yyf3e")
 
-[node name="Background" type="ColorRect" parent="." unique_id=2051068152]
-offset_right = 720.0
-offset_bottom = 1280.0
-color = Color(0.019607844, 0.050980393, 0.03137255, 0.78431374)
-
 [node name="PlayerShip" type="CharacterBody2D" parent="." unique_id=250421668]
 script = ExtResource("1_sln81")
 
@@ -24,7 +19,7 @@ script = ExtResource("3_leuwj")
 shape = SubResource("RectangleShape2D_xrivr")
 
 [node name="Muzzle" type="Node2D" parent="PlayerShip" unique_id=1767021728]
-position = Vector2(20, 0)
+position = Vector2(0, -10)
 
 [node name="EnemyTimer" type="Timer" parent="." unique_id=1355598015]
 wait_time = 1.2

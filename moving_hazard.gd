@@ -35,6 +35,14 @@ func _process(delta: float) -> void:
 		distance_traveled = 0.0
 
 func _on_body_entered(body: Node) -> void:
-	if body.name == "Player" or "Block" in body.name or "Ball" in body.name:
+	# Check if the body entering is the orb or any physics body we care about
+	if body.name == "Orb" or body.name == "Player" or "Ball" in body.name:
 		print("[Hazard] Hit by code-driven barrier: ", body.name)
-		get_tree().reload_current_scene()
+		var main_node = get_tree().current_scene
+		if main_node and main_node.has_method("reset_level"):
+			# Safely defer the reset to avoid physics callback errors
+			main_node.call_deferred("reset_level")
+		else:
+			get_tree().reload_current_scene()
+	else:
+		print("[Hazard] Collided with unknown body: ", body.name)

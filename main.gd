@@ -499,14 +499,17 @@ func _input(event: InputEvent) -> void:
 		return
 		
 	if event is InputEventMouseButton or event is InputEventScreenTouch:
-		if event.pressed:
-			start_drawing(event.position)
-		else:
-			stop_drawing()
+			# Transform local position to canvas coordinates to match scaled viewports
+			var pos = get_canvas_transform().affine_inverse() * event.position
+			if event.pressed:
+				start_drawing(pos)
+			else:
+				stop_drawing()
 			
 	elif event is InputEventMouseMotion or event is InputEventScreenDrag:
 		if is_drawing:
-			add_point_to_line(event.position)
+			var pos = get_canvas_transform().affine_inverse() * event.position
+			add_point_to_line(pos)
 
 func toggle_pause() -> void:
 	is_paused = not is_paused
@@ -815,6 +818,8 @@ func _on_hazard_entered(body: Node2D) -> void:
 		trigger_screen_flash(Color(1.0, 0.0, 0.4, 0.6), 0.3) # Crimson
 		trigger_screen_shake(12.0, 0.4)
 		print("OOF! Orb hit a hazard or went out of bounds!")
+		
+		# Safely defer the reset to prevent physics callback crashes
 		call_deferred("reset_level")
 
 func submit_score_to_huawei_leaderboard(score: int) -> void:
