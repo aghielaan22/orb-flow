@@ -1,6 +1,6 @@
 # 🌌 Orb Flow
 
-> A programmatic, asset-free cyberpunk/vaporwave arcade experience. Guide your energy orb through tactical physics-puzzles and high-octane retro space shooter terminals.
+> A programmatic, asset-free cyberpunk/vaporwave arcade experience. Guide your energy orb through tactical physics-puzzles, retro space shooter terminals, twisted security hangmans, neon color switches, and laser grid circuit breakers.
 
 ![Godot Engine](https://img.shields.io/badge/Engine-Godot%204.x-blue?style=flat-square&logo=godotengine)
 ![Platform](https://img.shields.io/badge/Platform-PC%20%2F%20Android-lightgrey?style=flat-square)
@@ -20,11 +20,11 @@ Want to play immediately on your mobile device?
 
 ## ✨ Features & Highlights
 
-- **Dual-Mode Arcade Action**: Seamlessly transition between tactical physics puzzle drawing and traditional retro arcade space shooter stages (`space_shooter.gd`).
-- **Mobile-First Virtual Arcade Controls**: Ergonomic, static touch-screen UI buttons for Left/Right steering and a dedicated Fire action, optimized specifically for mobile hardware.
-- **Defense Red Line Mechanics**: Protect your base against incoming enemy ships and hazards crossing the critical defense threshold, tracking escaped units dynamically.
+- **Multi-Mode Arcade & Terminal Action**: Seamlessly transition between tactical physics puzzle drawing (`main.gd`), retro arcade space shooter defense lines (`space_shooter.gd`), Cyber Hangman time-bomb decryption matrices (`cyber_hangman.gd`), Neon Color Switches (`neon_color_switch.tscn`), and ICE Breaker laser grids (`main.gd`).
+- **Mobile-First Virtual Arcade Controls**: Ergonomic, static touch-screen UI buttons for steering and custom actions, optimized specifically for mobile hardware.
+- **Dynamic Terminal Routing**: Fully integrated navigation across all 10 mainframe terminals with dedicated level intro popups, scores, and dynamic state synchronization.
 - **Programmatic Vaporwave Aesthetics**: Fully code-driven wireframe matrix background effects, scrolling synthwave grid lines, and vector neon graphics with zero external image asset dependencies.
-- **High-Impact Polish**: Reactive visual feedback including procedural hit-spark particle explosions (`spawn_hit_spark`) for destroyed enemies, hazards, and player ships.
+- **High-Impact Polish**: Reactive visual feedback including procedural hit-spark particle explosions, screen shake/flash mechanics, and dynamic audio feedback via procedural audio stream generators.
 
 ---
 
@@ -32,11 +32,11 @@ Want to play immediately on your mobile device?
 
 | Action | PC Control | Mobile Control |
 | :--- | :--- | :--- |
-| **Steer Left / Right** | `A` / `D` or Arrow Keys | On-Screen `◄` / `►` Buttons |
-| **Fire Projectile** | `Spacebar` | On-Screen `FIRE` Button |
+| **Steer / Move / Type** | `A` / `D`, Arrow Keys, or Keyboard | On-Screen Virtual Buttons / Keyboards |
+| **Fire / Confirm / Hint** | `Spacebar` / Mouse Clicks | On-Screen Action Buttons |
 | **Pause Game** | `ESC` or `P` Key | Top-Right Pause (`❚❚`) Button |
 | **Quick Restart** | `R` Key | Pause Menu / Game Over Overlay |
-| **Level Skip / Cheat** | `N` Key | N/A |
+| **Level Skip / Cheat** | `1`-`10` Keys, `N` Key | Terminal Selector / Dev Panel |
 
 ---
 
@@ -56,6 +56,6 @@ Want to play immediately on your mobile device?
 
 orb-flow/
 ├── scenes/          # Main gameplay, shooter, and UI scene files (.tscn)
-├── scripts/         # Core GDScript controllers (space_shooter.gd, main.gd, etc.)
+├── scripts/         # Core GDScript controllers (space_shooter.gd, main.gd, hangman.gd, etc.)
 ├── assets/          # Procedural shaders and custom audio streams
 └── project.godot    # Godot project configuration
