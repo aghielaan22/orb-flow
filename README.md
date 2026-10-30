@@ -20,11 +20,15 @@ Want to play immediately on your mobile device?
 
 ## ✨ Features & Highlights
 
-- **Multi-Mode Arcade & Terminal Action**: Seamlessly transition between tactical physics puzzle drawing (`main.gd`), retro arcade space shooter defense lines (`space_shooter.gd`), Cyber Hangman time-bomb decryption matrices (`cyber_hangman.gd`), Neon Color Switches (`neon_color_switch.tscn`), and ICE Breaker laser grids (`main.gd`).
-- **Mobile-First Virtual Arcade Controls**: Ergonomic, static touch-screen UI buttons for steering and custom actions, optimized specifically for mobile hardware.
-- **Dynamic Terminal Routing**: Fully integrated navigation across all 10 mainframe terminals with dedicated level intro popups, scores, and dynamic state synchronization.
-- **Programmatic Vaporwave Aesthetics**: Fully code-driven wireframe matrix background effects, scrolling synthwave grid lines, and vector neon graphics with zero external image asset dependencies.
-- **High-Impact Polish**: Reactive visual feedback including procedural hit-spark particle explosions, screen shake/flash mechanics, and dynamic audio feedback via procedural audio stream generators.
+- **Multi-Mode Arcade & Terminal Action**: Seamlessly transition between tactical physics puzzle drawing (`main.gd`), retro arcade space shooter defense lines (`space_shooter.gd`), Cyber Hangman time-bomb decryption matrices (`cyber_hangman.gd`), Neon Color Switches (`neon_color_switch.gd`), and Data Unblock sliding puzzle terminals (`unblock_puzzle_game.gd`).
+
+- **Mobile-First Virtual Arcade Controls**: Ergonomic, static touch-screen UI buttons, horizontal thumb steering sliders, and custom action layouts optimized specifically for mobile hardware.
+
+- **Dynamic Terminal Routing**: Fully integrated navigation across all 10 mainframe terminals with dedicated level intro popups, score synchronization (`ScoreManager`), and persistent high-score leaderboards.
+
+- **Programmatic Vaporwave Aesthetics**: Fully code-driven wireframe matrix background effects, scrolling synthwave grid lines, and vector neon graphics (`Line2D`) with zero external image asset dependencies.
+
+- **High-Impact Polish**: Reactive visual feedback including procedural hit-spark particle explosions, screen shake/flash mechanics, generous ink juice meters, and dynamic audio feedback via procedural audio stream generators.
 
 ---
 
@@ -32,8 +36,8 @@ Want to play immediately on your mobile device?
 
 | Action | PC Control | Mobile Control |
 | :--- | :--- | :--- |
-| **Steer / Move / Type** | `A` / `D`, Arrow Keys, or Keyboard | On-Screen Virtual Buttons / Keyboards |
-| **Fire / Confirm / Hint** | `Spacebar` / Mouse Clicks | On-Screen Action Buttons |
+| **Steer / Move / Type** | `A` / `D`, Arrow Keys, or Keyboard | On-Screen Virtual Buttons / Horizontal Thumb Slider |
+| **Fire / Confirm / Hint** | `Spacebar` / Mouse Clicks | On-Screen Action Buttons (`FIRE`) |
 | **Pause Game** | `ESC` or `P` Key | Top-Right Pause (`❚❚`) Button |
 | **Quick Restart** | `R` Key | Pause Menu / Game Over Overlay |
 | **Level Skip / Cheat** | `1`-`10` Keys, `N` Key | Terminal Selector / Dev Panel |
@@ -49,10 +53,10 @@ Want to play immediately on your mobile device?
 1. Clone the repository:
    ```bash
    git clone [https://github.com/aghielaan22/orb-flow.git](https://github.com/aghielaan22/orb-flow.git)
-
+   
 2. Open Godot Engine, click Import, and select the project.godot file from your cloned directory.
 
-3. Press F5 (or click the Play button) to run the project.
+3.Press F5 (or click the Play button) to run the project.
 
 orb-flow/
 ├── scenes/          # Main gameplay, shooter, and UI scene files (.tscn)
