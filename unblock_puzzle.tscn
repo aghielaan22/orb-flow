@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://cpy3fs84yl5hx"]
+
+[ext_resource type="Script" uid="uid://cs1mbo43c5dn7" path="res://unblock_puzzle.gd" id="1_f1dbu"]
+
+[node name="UnblockPuzzle" type="Control" unique_id=1152169680]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_f1dbu")

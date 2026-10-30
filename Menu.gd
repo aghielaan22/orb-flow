@@ -224,6 +224,9 @@ func show_how_to_play() -> void:
     [ MODE 5: SPACE SHOOTER — TERMINAL 2, 4, & 9 ]
     • Pilot your starfighter and blast incoming cyber threats.
     • Survive enemy waves to clear the defense protocol!
+
+    [ MODE 6: DATA UNBLOCK — TERMINAL 10 ]
+    • Slide firewall blocks to clear a path for the Red Key Node!
     """
 	info_text.add_theme_font_size_override("font_size", 11)
 	info_text.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
@@ -333,7 +336,7 @@ func show_terminal_selector(container: CenterContainer) -> void:
 		{"name": "Data Matrix", "type": "HANGMAN"},
 		{"name": "ICE Breaker", "type": "CIRCUIT"},
 		{"name": "Overdrive Protocol", "type": "SHOOTER"},
-		{"name": "Mainframe Core", "type": "FINALE"}
+		{"name": "Data Unblock", "type": "UNBLOCK"}
 	]
 
 	for i in range(terminal_data.size()):
@@ -355,9 +358,9 @@ func show_terminal_selector(container: CenterContainer) -> void:
 			"CIRCUIT":
 				btn_text = "🛡 TERM 08 — " + info["name"]
 				btn_color = Color(0.0, 1.0, 0.9)
-			"FINALE":
-				btn_text = "🌟 TERM 10 — " + info["name"]
-				btn_color = Color(1.0, 0.0, 0.8)
+			"UNBLOCK":
+				btn_text = "🔓 TERM 10 — " + info["name"]
+				btn_color = Color(1.0, 0.1, 0.5)
 			_:
 				btn_text = "🔵 TERM " + ("0" + str(lvl) if lvl < 10 else str(lvl)) + " — " + info["name"]
 				btn_color = Color(0.2, 1.0, 0.8)
@@ -389,6 +392,8 @@ func launch_level(lvl: int) -> void:
 		get_tree().change_scene_to_file("res://neon_color_switch.tscn")
 	elif lvl in [2, 4, 9]:
 		get_tree().change_scene_to_file("res://space_shooter.tscn")
+	elif lvl == 10:
+		get_tree().change_scene_to_file("res://unblock_puzzle.tscn")
 	else:
 		get_tree().change_scene_to_file("res://main.tscn")
 

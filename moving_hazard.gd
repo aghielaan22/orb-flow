@@ -5,6 +5,9 @@ var move_direction: Vector2 = Vector2.RIGHT
 var travel_limit: float = 200.0
 var distance_traveled: float = 0.0
 
+func _ready() -> void:
+	setup_visual()
+
 func setup_visual() -> void:
 	# Add collision shape
 	var col = CollisionShape2D.new()

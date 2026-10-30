@@ -1,4 +1,5 @@
 extends Node2D
+# space_shooter.gd - Master game controller for arcade space shooter terminals (2, 4, 9)
 
 static var input_dir: float = 0.0
 static var firing_pressed: bool = false
@@ -28,8 +29,8 @@ var max_escaped_allowed: int = 3
 var is_game_over: bool = false
 var is_paused: bool = false
 
-# Touch dragging state for smooth single-finger glide steering
-var is_dragging_player: bool = false
+# --- SLIDER CONTROLS STATE ---
+var steering_slider: HSlider = null
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -57,7 +58,7 @@ func _ready() -> void:
 		var current_lvl = main_game_level()
 		var intro = load("res://level_intro.gd").new(current_lvl)
 		get_tree().root.add_child(intro)
-	
+
 func main_game_level() -> int:
 	var main_script = load("res://main.gd")
 	if main_script and "current_level" in main_script:
@@ -80,38 +81,6 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_tree().reload_current_scene()
 			elif event.keycode == KEY_N:
 				on_victory()
-	
-	# Handle single-finger drag / glide steering in the upper game area
-	elif event is InputEventScreenTouch:
-		if event.pressed:
-			if event.position.y < screen_size.y - 220:
-				is_dragging_player = true
-				update_glide_position(event.position.x)
-		else:
-			is_dragging_player = false
-			input_dir = 0.0
-	elif event is InputEventScreenDrag and is_dragging_player:
-		if event.position.y < screen_size.y - 220:
-			update_glide_position(event.position.x)
-	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed and event.position.y < screen_size.y - 220:
-			is_dragging_player = true
-			update_glide_position(event.position.x)
-		elif not event.pressed:
-			is_dragging_player = false
-			input_dir = 0.0
-	elif event is InputEventMouseMotion and is_dragging_player:
-		if event.position.y < screen_size.y - 220:
-			update_glide_position(event.position.x)
-
-func update_glide_position(touch_x: float) -> void:
-	if not is_instance_valid(player_ship):
-		return
-	var diff = touch_x - player_ship.position.x
-	if abs(diff) > 5.0:
-		input_dir = sign(diff) * min(abs(diff) / 30.0, 1.5)
-	else:
-		input_dir = 0.0
 
 func toggle_pause_menu() -> void:
 	if is_game_over:
@@ -544,7 +513,37 @@ func setup_ui() -> void:
 	red_line.add_point(Vector2(screen_size.x, red_line_y))
 	canvas.add_child(red_line)
 
-	var shoot_btn = create_control_button("FIRE", Vector2(screen_size.x - 180, screen_size.y - 145), Vector2(160, 85), Color(1.0, 0.0, 0.5))
+	# --- HORIZONTAL THUMB SLIDER (Bottom Left, opposite Fire button) ---
+	steering_slider = HSlider.new()
+	steering_slider.min_value = -1.0
+	steering_slider.max_value = 1.0
+	steering_slider.step = 0.01
+	steering_slider.value = 0.0
+	steering_slider.custom_minimum_size = Vector2(240, 50)
+	steering_slider.position = Vector2(30, screen_size.y - 125)
+	
+	steering_slider.value_changed.connect(func(val: float):
+		input_dir = val * 1.8 # Multiplier for responsive thumb control
+	)
+	# When user releases thumb, smoothly spring slider back to center
+	steering_slider.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and not event.pressed:
+			var tween = create_tween()
+			tween.tween_property(steering_slider, "value", 0.0, 0.15)
+		elif event is InputEventScreenTouch and not event.pressed:
+			var tween = create_tween()
+			tween.tween_property(steering_slider, "value", 0.0, 0.15)
+	)
+	canvas.add_child(steering_slider)
+
+	var slider_label = Label.new()
+	slider_label.text = "◄ STEER ►"
+	slider_label.position = Vector2(95, screen_size.y - 155)
+	slider_label.add_theme_font_size_override("font_size", 14)
+	slider_label.add_theme_color_override("font_color", Color(0.0, 0.9, 1.0))
+	canvas.add_child(slider_label)
+
+	var shoot_btn = create_control_button("FIRE", Vector2(screen_size.x - 190, screen_size.y - 145), Vector2(160, 85), Color(1.0, 0.0, 0.5))
 	shoot_btn.add_theme_font_size_override("font_size", 28)
 	shoot_btn.button_down.connect(func(): firing_pressed = true)
 	shoot_btn.button_up.connect(func(): firing_pressed = false)

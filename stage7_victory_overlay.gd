@@ -1,4 +1,5 @@
 extends CanvasLayer
+# stage7_victory_overlay.gd - Final game completion overlay for Terminal 10 / Mission Success
 
 var final_score: int = 0
 

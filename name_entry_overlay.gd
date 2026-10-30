@@ -59,6 +59,10 @@ func setup_ui() -> void:
 	line_edit.add_theme_font_size_override("font_size", 28)
 	vbox.add_child(line_edit)
 	
+	# Automatically grab focus so player can type immediately
+	line_edit.grab_focus()
+	line_edit.select_all()
+	
 	# Submit Button
 	var btn = Button.new()
 	btn.text = "✔ SAVE TO LEADERBOARD"

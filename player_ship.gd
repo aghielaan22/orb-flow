@@ -1,4 +1,5 @@
 extends CharacterBody2D
+# player_ship.gd - Starfighter controller for the arcade space shooter terminals
 
 @export var speed: float = 650.0
 @export var bullet_scene: PackedScene = preload("res://bullet.tscn")
@@ -35,7 +36,7 @@ func _physics_process(delta: float) -> void:
 	var direction := 0.0
 	var space_shooter_node = get_parent()
 	
-	# 1. Read Left/Right arcade button input from space_shooter.gd
+	# 1. Read Left/Right arcade button input from parent manager
 	if space_shooter_node and "input_dir" in space_shooter_node:
 		direction = space_shooter_node.input_dir
 

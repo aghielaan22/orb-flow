@@ -1,4 +1,5 @@
 extends Line2D
+# ship_visual.gd - Procedural vector starfighter graphic for the player ship
 
 func _ready() -> void:
 	width = 3.5

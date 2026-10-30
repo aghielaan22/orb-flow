@@ -147,8 +147,12 @@ func _populate_scores() -> void:
 	line.color = Color(1.0, 0.0, 0.6, 0.5)
 	score_list.add_child(line)
 
-	# Fetch scores from ScoreManager (with fallback to sample data if empty)
-	var records = ScoreManager.load_scores() if ClassDB.class_exists("ScoreManager") else []
+	# Fetch scores from ScoreManager with fallback
+	var records = []
+	if Engine.has_singleton("ScoreManager") or ClassDB.class_exists("ScoreManager") or true:
+		# ScoreManager is a global class_name
+		records = ScoreManager.load_scores()
+		
 	if records.is_empty():
 		records = sample_leaderboard_data
 

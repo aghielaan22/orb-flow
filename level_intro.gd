@@ -47,39 +47,39 @@ func setup_intro_ui() -> void:
 	
 	if level_num == 3 or level_num == 7:
 		objective_desc = """
-		[ CYBER HANGMAN PROTOCOL ]
-		• Objective: Decrypt the hidden security passphrase.
-		• Control: Tap virtual keys to guess letters.
-		• Warning: Too many trace breaches triggers system lock!
-		"""
+        [ CYBER HANGMAN PROTOCOL ]
+        • Objective: Decrypt the hidden security passphrase.
+        • Control: Tap virtual keys to guess letters.
+        • Warning: Too many trace breaches triggers system lock!
+        """
 	elif level_num == 6:
 		objective_desc = """
-		[ NEON COLOR SWITCH PROTOCOL ]
-		• Objective: Match frequency pulses.
-		• Control: Tap to shift your core filter color.
-		• Warning: Mismatched frequencies cause destabilization!
-		"""
+        [ NEON COLOR SWITCH PROTOCOL ]
+        • Objective: Match frequency pulses.
+        • Control: Tap to shift your core filter color.
+        • Warning: Mismatched frequencies cause destabilization!
+        """
 	elif level_num in [2, 4, 9]:
 		objective_desc = """
-		[ ARCADE COMBAT PROTOCOL ]
-		• Objective: Eliminate incoming malware targets.
-		• Defense Rule: Do not let enemies cross the red perimeter!
-		• Controls: Drag to glide, automatic firing engaged.
-		"""
+        [ ARCADE COMBAT PROTOCOL ]
+        • Objective: Eliminate incoming malware targets.
+        • Defense Rule: Do not let enemies cross the red perimeter!
+        • Controls: Drag to glide, automatic firing engaged.
+        """
 	elif level_num == 8:
 		objective_desc = """
-		[ ICE BREAKER PROTOCOL ]
-		• Objective: Navigate past sweeping security firewalls.
-		• Control: Draw lines carefully with limited ink supply.
-		• Warning: Touching active ICE lasers wipes the session!
-		"""
+        [ ICE BREAKER PROTOCOL ]
+        • Objective: Navigate past sweeping security firewalls.
+        • Control: Draw lines carefully with limited ink supply.
+        • Warning: Touching active ICE lasers wipes the session!
+        """
 	else:
 		objective_desc = """
-		[ PHYSICS PUZZLE PROTOCOL ]
-		• Objective: Collect all stars & reach the core goal.
-		• Control: Draw guide paths for the energy orb.
-		• Warning: Avoid static red hazards and dead zones!
-		"""
+        [ PHYSICS PUZZLE PROTOCOL ]
+        • Objective: Collect all stars & reach the core goal.
+        • Control: Draw guide paths for the energy orb.
+        • Warning: Avoid static red hazards and dead zones!
+        """
 		
 	var desc_label = Label.new()
 	desc_label.text = objective_desc

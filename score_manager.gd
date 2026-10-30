@@ -1,5 +1,6 @@
 class_name ScoreManager
 extends Node
+# score_manager.gd - Global static manager for persistent leaderboard scores
 
 const SAVE_PATH = "user://leaderboard_data.json"
 
@@ -48,3 +49,9 @@ static func load_scores() -> Array:
 			{"name": "TRN", "score": 15, "date": "2026-10-03"}
 		]
 	return records
+
+static func is_high_score(new_score: int) -> bool:
+	var records = load_scores()
+	if records.size() < 10:
+		return true
+	return new_score > records[-1]["score"]

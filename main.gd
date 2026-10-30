@@ -16,9 +16,9 @@ var current_line: Line2D = null
 var current_collision: StaticBody2D = null
 var points: Array = []
 
-# --- GENEROUS JUICE / INK METER VARIABLES ---
-var max_ink: float = 600.0   # Much more generous ink pool for creative drawing paths!
-var current_ink: float = 600.0
+# --- GENEROUS JUICE / INK METER VARIABLES (Massively Increased) ---
+var max_ink: float = 2000.0   # Vastly increased ink pool for limitless creative drawing paths!
+var current_ink: float = 2000.0
 var ink_bar: ProgressBar = null
 
 var orb: RigidBody2D = null
@@ -261,8 +261,8 @@ func setup_game_elements() -> void:
 	stars_label.add_theme_font_size_override("font_size", 20)
 	canvas_layer.add_child(stars_label)
 
-	# --- GENEROUS INK / JUICE METER UI (Level 5 & Level 8) ---
-	if current_level == 5 or current_level == 8:
+	# --- GENEROUS INK / JUICE METER UI (Levels 1, 5 & 8) ---
+	if current_level == 1 or current_level == 5 or current_level == 8:
 		var ink_label = Label.new()
 		ink_label.text = "INK JUICE:"
 		ink_label.position = Vector2(25, 95)
@@ -301,7 +301,7 @@ func setup_vaporwave_background() -> void:
 	var bg_layer = CanvasLayer.new()
 	bg_layer.layer = -10
 	
-	var bg_node = VaporwaveBackground.new()
+	var bg_node = VaporwaveBackground.new()    
 	bg_node.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	bg_layer.add_child(bg_node)
 	
@@ -369,10 +369,8 @@ func setup_level_configuration() -> void:
 		3:
 			call_deferred("_route_to_cyber_hangman")
 		4:
-			setup_hazard(Vector2(240, 600), Vector2(220, 20))
-			setup_star(Vector2(360, 400))
+			call_deferred("_route_to_space_shooter")
 		5:
-			# --- TERMINAL 5 (QUANTUM WELL) — GENEROUS INK & MOVING HAZARDS ---
 			setup_star(Vector2(180, 320))
 			setup_star(Vector2(540, 980))
 			spawn_code_hazard(Vector2(360, 580), 120.0, 240.0, Vector2.RIGHT)
@@ -382,11 +380,14 @@ func setup_level_configuration() -> void:
 		7:
 			call_deferred("_route_to_cyber_hangman")
 		8:
-			# --- TERMINAL 8 (ICE BREAKER) — LASER GRID PUZZLE ---
 			setup_star(Vector2(200, 320))
 			setup_star(Vector2(520, 880))
-			setup_hazard(Vector2(360, 550), Vector2(420, 18)) # Static ICE Firewall Bar
-			spawn_code_hazard(Vector2(360, 780), 170.0, 240.0, Vector2.RIGHT) # Sweeping Laser Grid Node
+			setup_hazard(Vector2(360, 550), Vector2(420, 18))
+			spawn_code_hazard(Vector2(360, 780), 170.0, 240.0, Vector2.RIGHT)
+		9:
+			call_deferred("_route_to_space_shooter")
+		10:
+			call_deferred("_route_to_unblock_puzzle")
 		_:
 			setup_hazard(Vector2(360, 700), Vector2(300, 20))
 			setup_star(Vector2(260, 500))
@@ -397,8 +398,14 @@ func setup_level_configuration() -> void:
 func _route_to_cyber_hangman() -> void:
 	get_tree().change_scene_to_file("res://cyber_hangman.tscn")
 
+func _route_to_space_shooter() -> void:
+	get_tree().change_scene_to_file("res://space_shooter.tscn")
+
 func _route_to_color_switch() -> void:
 	get_tree().change_scene_to_file("res://neon_color_switch.tscn")
+
+func _route_to_unblock_puzzle() -> void:
+	get_tree().change_scene_to_file("res://unblock_puzzle.tscn")
 
 func setup_hazard(pos: Vector2, size: Vector2) -> void:
 	var hazard_area = Area2D.new()
@@ -581,7 +588,7 @@ func _input(event: InputEvent) -> void:
 				get_tree().reload_current_scene()
 		elif event.keycode == KEY_0:
 			current_level = 10
-			get_tree().reload_current_scene()
+			get_tree().change_scene_to_file("res://unblock_puzzle.tscn")
 		elif event.keycode == KEY_N:
 			if orb and not is_game_over:
 				var goal_node = get_node_or_null("GoalArea")
@@ -774,6 +781,8 @@ func show_victory_screen() -> void:
 		next_btn.text = " ▶ LAUNCH CYBER HANGMAN (LEVEL " + str(next_target_level) + ") "
 	elif next_target_level == 6:
 		next_btn.text = " ▶ LAUNCH TERMINAL 6 (COLOR SWITCH) "
+	elif next_target_level == 10:
+		next_btn.text = " ▶ LAUNCH TERMINAL 10 (DATA UNBLOCK) "
 	elif next_target_level in [2, 4, 9]:
 		next_btn.text = " ▶ LAUNCH SPACE SHOOTER (LEVEL " + str(next_target_level) + ") "
 	elif next_target_level > 10:
@@ -793,6 +802,8 @@ func show_victory_screen() -> void:
 			get_tree().change_scene_to_file("res://cyber_hangman.tscn")
 		elif current_level == 6:
 			get_tree().change_scene_to_file("res://neon_color_switch.tscn")
+		elif current_level == 10:
+			get_tree().change_scene_to_file("res://unblock_puzzle.tscn")
 		elif current_level in [2, 4, 9]:
 			get_tree().change_scene_to_file("res://space_shooter.tscn")
 		else:
@@ -818,7 +829,7 @@ func show_victory_screen() -> void:
 	add_child(canvas)
 
 func start_drawing(pos: Vector2) -> void:
-	if (current_level == 5 or current_level == 8) and current_ink <= 0:
+	if (current_level == 1 or current_level == 5 or current_level == 8) and current_ink <= 0:
 		play_cyber_sfx("hazard")
 		return
 
@@ -844,7 +855,7 @@ func add_point_to_line(pos: Vector2) -> void:
 		
 	var dist = points[-1].distance_to(pos)
 	
-	if current_level == 5 or current_level == 8:
+	if current_level == 1 or current_level == 5 or current_level == 8:
 		if current_ink <= 0:
 			stop_drawing()
 			return
@@ -901,107 +912,128 @@ func stop_drawing() -> void:
 			level_start_time = Time.get_ticks_msec()
 			if orb != null and is_instance_valid(orb):
 				orb.freeze = false
-			print("[Orb Flow] First line completed. Simulation initiated!")
 
 func _on_goal_entered(body: Node2D) -> void:
 	if body == orb and not is_game_over:
-		if collected_stars < total_level_stars:
-			print("Goal locked! Collect all stars first: ", collected_stars, "/", total_level_stars)
-			play_cyber_sfx("hazard")
-			return
-			
 		is_game_over = true
 		play_cyber_sfx("victory")
-		trigger_screen_flash(Color(0.0, 1.0, 0.9, 0.5), 0.4)
-		trigger_screen_shake(10.0, 0.35)
+		trigger_screen_flash(Color(0.0, 1.0, 0.9, 0.6), 0.3)
 		
-		var goal_node = get_node_or_null("GoalArea")
-		if goal_node:
-			spawn_success_burst(goal_node.global_position, self)
-		
-		var elapsed_time = (Time.get_ticks_msec() - level_start_time) / 1000.0
-		var time_bonus = max(0, int(100 - (elapsed_time * 2)))
-		var star_bonus = collected_stars * 200
-		var level_score = 500 + time_bonus + star_bonus
-		
+		var base_reward = 300
+		var star_bonus = collected_stars * 150
+		var level_score = base_reward + star_bonus
 		total_score += level_score
-		print("VICTORY! Level score: ", level_score, " | Total Score: ", total_score)
 		
-		submit_score_to_huawei_leaderboard(total_score)
-		call_deferred("show_victory_screen")
+		print("Terminal ", current_level, " Cleared! Score added: ", level_score)
+		show_victory_screen()
 
 func _on_hazard_entered(body: Node2D) -> void:
 	if body == orb and not is_game_over:
 		is_game_over = true
 		play_cyber_sfx("hazard")
-		trigger_screen_flash(Color(1.0, 0.0, 0.4, 0.6), 0.3)
-		trigger_screen_shake(12.0, 0.4)
-		print("OOF! Orb hit a hazard or went out of bounds!")
-		call_deferred("reset_level")
+		trigger_screen_shake(10.0, 0.3)
+		trigger_screen_flash(Color(1.0, 0.0, 0.4, 0.7), 0.3)
+		
+		print("ICE Firewall Breached! Terminal Failed.")
+		trigger_game_over()
 
-func submit_score_to_huawei_leaderboard(score: int) -> void:
-	print("[HMS SDK Hook] Submitting total score to Huawei Game Service Leaderboard: ", score)
+func trigger_game_over() -> void:
+	is_drawing = false
+	var canvas = CanvasLayer.new()
+	canvas.layer = 10
+	
+	var overlay = ColorRect.new()
+	overlay.color = Color(0.06, 0.01, 0.02, 0.9)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	canvas.add_child(overlay)
+	
+	var center_container = CenterContainer.new()
+	center_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	canvas.add_child(center_container)
+	
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.custom_minimum_size = Vector2(400, 350)
+	center_container.add_child(vbox)
+	
+	var title = Label.new()
+	title.text = "SYSTEM LOCK / CORRUPTED"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_color_override("font_color", Color(1.0, 0.0, 0.4))
+	vbox.add_child(title)
+	
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 25)
+	vbox.add_child(spacer)
+	
+	var retry_btn = Button.new()
+	retry_btn.text = "↺ RESTART TERMINAL PROTOCOL"
+	retry_btn.custom_minimum_size = Vector2(320, 50)
+	retry_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	retry_btn.pressed.connect(reset_level)
+	vbox.add_child(retry_btn)
+	
+	var spacer2 = Control.new()
+	spacer2.custom_minimum_size = Vector2(0, 15)
+	vbox.add_child(spacer2)
+	
+	var menu_btn = Button.new()
+	menu_btn.text = "⌂ RETURN TO MAIN MENU"
+	menu_btn.custom_minimum_size = Vector2(320, 50)
+	menu_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	menu_btn.pressed.connect(func() -> void:
+		current_level = 1
+		total_score = 0
+		get_tree().change_scene_to_file("res://menu.tscn")
+	)
+	vbox.add_child(menu_btn)
+	
+	add_child(canvas)
 
 func reset_level() -> void:
-	is_game_over = false
-	is_paused = false
-	has_started_simulation = false
-	get_tree().paused = false
 	get_tree().reload_current_scene()
 
 class VaporwaveBackground extends Control:
-	var scroll_offset: float = 0.0
+	var grid_offset: float = 0.0
 	
 	func _process(delta: float) -> void:
-		scroll_offset += delta * 40.0
-		if scroll_offset > 100.0:
-			scroll_offset = 0.0
+		grid_offset += delta * 60.0
+		if grid_offset > 50.0:
+			grid_offset = 0.0
 		queue_redraw()
 		
 	func _draw() -> void:
 		var sz = size
-		var horizon_y = sz.y * 0.50
+		var horizon_y = sz.y * 0.52
+		draw_rect(Rect2(0, 0, sz.x, horizon_y), Color(0.07, 0.02, 0.14))
 		
-		draw_rect(Rect2(0, 0, sz.x, horizon_y), Color(0.08, 0.02, 0.18))
+		var sun_center = Vector2(sz.x * 0.5, horizon_y - 30)
+		var sun_radius = 85.0
+		for i in range(12):
+			var r = sun_radius - (i * 4)
+			var alpha = 0.12 + (i * 0.04)
+			draw_circle(sun_center, r, Color(1.0, 0.35, 0.65, alpha))
 		
-		var sun_center = Vector2(sz.x * 0.5, horizon_y - 20)
-		var sun_radius = 80.0
-		for i in range(10):
-			var r = sun_radius - (i * 5)
-			var alpha = 0.15 + (i * 0.04)
-			draw_circle(sun_center, r, Color(1.0, 0.3, 0.6, alpha))
-		
-		for y_off in range(-int(sun_radius), int(sun_radius), 12):
+		for y_off in range(-int(sun_radius), int(sun_radius), 10):
 			if y_off > 0:
 				var slice_y = sun_center.y + y_off
 				var w = sqrt(sun_radius * sun_radius - y_off * y_off)
-				draw_rect(Rect2(sun_center.x - w, slice_y, w * 2, 4), Color(0.08, 0.02, 0.18))
+				draw_rect(Rect2(sun_center.x - w, slice_y, w * 2, 3), Color(0.07, 0.02, 0.14))
 
-		var mountain_color = Color(0.05, 0.02, 0.12)
-		var wire_color = Color(1.0, 0.0, 0.6, 0.4)
+		draw_rect(Rect2(0, horizon_y, sz.x, sz.y - horizon_y), Color(0.02, 0.01, 0.05))
+		draw_line(Vector2(0, horizon_y), Vector2(sz.x, horizon_y), Color(1.0, 0.0, 0.7), 3.0)
 		
-		var peaks = [
-			Vector2(0, horizon_y),
-			Vector2(120, horizon_y - 120),
-			Vector2(260, horizon_y - 60),
-			Vector2(400, horizon_y - 160),
-			Vector2(560, horizon_y - 90),
-			Vector2(720, horizon_y)
-		]
-		
-		var poly_points = PackedVector2Array()
-		poly_points.append(Vector2(0, horizon_y))
-		for p in peaks: poly_points.append(p)
-		poly_points.append(Vector2(sz.x, horizon_y))
-		draw_polygon(poly_points, PackedColorArray([mountain_color]))
-		
-		for i in range(peaks.size() - 1):
-			draw_line(peaks[i], peaks[i+1], wire_color, 2.0)
-
-		draw_rect(Rect2(0, horizon_y, sz.x, sz.y - horizon_y), Color(0.02, 0.01, 0.06))
-		draw_line(Vector2(0, horizon_y), Vector2(sz.x, horizon_y), Color(0.0, 0.9, 1.0), 3.0)
-		
-		var grid_step = 40.0
-		for i in range(int(sz.x / grid_step) + 5):
-			var x_pos = (i * grid_step) - fmod(scroll_offset * 2.0, grid_step)
-			draw_line(Vector2(x_pos, horizon_y), Vector2((x_pos - sz.x * 0.5) * 1.8 + sz.x * 0.5, sz.y), Color(1.0, 0.0, 0.6, 0.15), 1.5)
+		var vanishing_point = Vector2(sz.x * 0.5, horizon_y)
+		var num_rays = 14
+		for i in range(num_rays):
+			var t = float(i) / (num_rays - 1)
+			var bottom_x = (t * sz.x * 2.0) - (sz.x * 0.5)
+			draw_line(vanishing_point, Vector2(bottom_x, sz.y), Color(0.0, 0.9, 1.0, 0.35), 1.5)
+			
+		var num_horizontal = 14
+		for i in range(num_horizontal):
+			var progress = fmod((float(i) + grid_offset / 50.0), num_horizontal) / num_horizontal
+			var y = horizon_y + pow(progress, 2.2) * (sz.y - horizon_y)
+			var alpha = progress * 0.65
+			draw_line(Vector2(0, y), Vector2(sz.x, y), Color(1.0, 0.0, 0.65, alpha), 1.5)
