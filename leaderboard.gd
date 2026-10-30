@@ -50,76 +50,81 @@ func setup_leaderboard_ui() -> void:
 
 	var vbox = VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.custom_minimum_size = Vector2(520, 720)
-	vbox.add_theme_constant_override("separation", 20)
+	vbox.custom_minimum_size = Vector2(620, 860)
+	vbox.add_theme_constant_override("separation", 22)
 	center_container.add_child(vbox)
 
+	# --- MASSIVE GLOWING TITLE ---
 	var title_label = Label.new()
 	title_label.text = "HMS LEADERBOARD"
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	title_label.add_theme_font_size_override("font_size", 36)
+	title_label.add_theme_font_size_override("font_size", 48)
 	title_label.add_theme_color_override("font_color", Color(0.0, 0.95, 1.0))
+	title_label.add_theme_color_override("font_outline_color", Color(1.0, 0.0, 0.5))
+	title_label.add_theme_constant_override("outline_size", 8)
 	vbox.add_child(title_label)
 
 	var subtitle_label = Label.new()
 	subtitle_label.text = "// TOP CYBERPUNK OPERATIVES //"
 	subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	subtitle_label.add_theme_font_size_override("font_size", 14)
+	subtitle_label.add_theme_font_size_override("font_size", 16)
 	subtitle_label.add_theme_color_override("font_color", Color(1.0, 0.0, 0.6))
 	vbox.add_child(subtitle_label)
 
 	var spacer = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 10)
+	spacer.custom_minimum_size = Vector2(0, 5)
 	vbox.add_child(spacer)
 
+	# --- CYBER CARD PANEL ---
 	var panel_container = PanelContainer.new()
 	panel_container.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	var panel_style = StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.06, 0.04, 0.12, 0.88)
-	panel_style.border_width_left = 2
-	panel_style.border_width_top = 2
-	panel_style.border_width_right = 2
-	panel_style.border_width_bottom = 2
+	panel_style.bg_color = Color(0.04, 0.02, 0.12, 0.94)
+	panel_style.border_width_left = 3
+	panel_style.border_width_top = 3
+	panel_style.border_width_right = 3
+	panel_style.border_width_bottom = 3
 	panel_style.border_color = Color(0.0, 0.9, 1.0)
-	panel_style.corner_radius_top_left = 8
-	panel_style.corner_radius_top_right = 8
-	panel_style.corner_radius_bottom_left = 8
-	panel_style.corner_radius_bottom_right = 8
-	panel_style.content_margin_left = 20
-	panel_style.content_margin_right = 20
-	panel_style.content_margin_top = 18
-	panel_style.content_margin_bottom = 18
+	panel_style.corner_radius_top_left = 12
+	panel_style.corner_radius_top_right = 12
+	panel_style.corner_radius_bottom_left = 12
+	panel_style.corner_radius_bottom_right = 12
+	panel_style.content_margin_left = 25
+	panel_style.content_margin_right = 25
+	panel_style.content_margin_top = 22
+	panel_style.content_margin_bottom = 22
 	panel_container.add_theme_stylebox_override("panel", panel_style)
 	vbox.add_child(panel_container)
 
 	score_list = VBoxContainer.new()
-	score_list.add_theme_constant_override("separation", 10)
+	score_list.add_theme_constant_override("separation", 14)
 	panel_container.add_child(score_list)
 
 	var spacer2 = Control.new()
-	spacer2.custom_minimum_size = Vector2(0, 10)
+	spacer2.custom_minimum_size = Vector2(0, 5)
 	vbox.add_child(spacer2)
 
+	# --- HUGE PUNCHY BACK BUTTON ---
 	back_button = Button.new()
 	back_button.text = "« BACK TO MAIN TERMINAL"
-	back_button.custom_minimum_size = Vector2(340, 50)
+	back_button.custom_minimum_size = Vector2(460, 68)
 	back_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	back_button.add_theme_font_size_override("font_size", 16)
+	back_button.add_theme_font_size_override("font_size", 20)
 	back_button.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	
 	var back_style = StyleBoxFlat.new()
-	back_style.bg_color = Color(0.06, 0.04, 0.12, 0.9)
-	back_style.border_width_left = 2
-	back_style.border_width_top = 2
-	back_style.border_width_right = 2
-	back_style.border_width_bottom = 2
+	back_style.bg_color = Color(0.06, 0.04, 0.14, 0.95)
+	back_style.border_width_left = 3
+	back_style.border_width_top = 3
+	back_style.border_width_right = 3
+	back_style.border_width_bottom = 3
 	back_style.border_color = Color(1.0, 0.85, 0.0)
-	back_style.corner_radius_top_left = 6
-	back_style.corner_radius_top_right = 6
-	back_style.corner_radius_bottom_left = 6
-	back_style.corner_radius_bottom_right = 6
+	back_style.corner_radius_top_left = 10
+	back_style.corner_radius_top_right = 10
+	back_style.corner_radius_bottom_left = 10
+	back_style.corner_radius_bottom_right = 10
 	
 	back_button.add_theme_stylebox_override("normal", back_style)
 	back_button.add_theme_stylebox_override("hover", back_style)
@@ -135,22 +140,21 @@ func _populate_scores() -> void:
 	for child in score_list.get_children():
 		child.queue_free()
 		
-	# Header Row
+	# Header Row (Enlarged)
 	var header = Label.new()
-	header.text = "RANK    OPERATIVE    SCORE      DATE"
-	header.add_theme_font_size_override("font_size", 13)
+	header.text = "RANK     OPERATIVE     SCORE        DATE"
+	header.add_theme_font_size_override("font_size", 16)
 	header.add_theme_color_override("font_color", Color(1.0, 0.0, 0.6))
 	score_list.add_child(header)
 	
 	var line = ColorRect.new()
-	line.custom_minimum_size = Vector2(0, 2)
-	line.color = Color(1.0, 0.0, 0.6, 0.5)
+	line.custom_minimum_size = Vector2(0, 3)
+	line.color = Color(1.0, 0.0, 0.6, 0.7)
 	score_list.add_child(line)
 
 	# Fetch scores from ScoreManager with fallback
 	var records = []
 	if Engine.has_singleton("ScoreManager") or ClassDB.class_exists("ScoreManager") or true:
-		# ScoreManager is a global class_name
 		records = ScoreManager.load_scores()
 		
 	if records.is_empty():
@@ -163,35 +167,35 @@ func _populate_scores() -> void:
 			rank_str = "👑 1"
 		
 		var row = HBoxContainer.new()
-		row.custom_minimum_size = Vector2(440, 30)
+		row.custom_minimum_size = Vector2(520, 42)
 		row.add_theme_constant_override("separation", 15)
 		
 		var rank_lbl = Label.new()
 		rank_lbl.text = rank_str
-		rank_lbl.custom_minimum_size = Vector2(60, 0)
-		rank_lbl.add_theme_font_size_override("font_size", 15)
-		rank_lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0) if i == 0 else Color(0.8, 0.8, 0.8))
+		rank_lbl.custom_minimum_size = Vector2(75, 0)
+		rank_lbl.add_theme_font_size_override("font_size", 22)
+		rank_lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0) if i == 0 else Color(0.9, 0.9, 0.9))
 		row.add_child(rank_lbl)
 		
 		var name_lbl = Label.new()
 		name_lbl.text = str(entry.get("name", "AAA"))
-		name_lbl.custom_minimum_size = Vector2(90, 0)
-		name_lbl.add_theme_font_size_override("font_size", 15)
+		name_lbl.custom_minimum_size = Vector2(110, 0)
+		name_lbl.add_theme_font_size_override("font_size", 22)
 		name_lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 		row.add_child(name_lbl)
 		
 		var score_lbl = Label.new()
 		score_lbl.text = str(entry.get("score", 0))
-		score_lbl.custom_minimum_size = Vector2(70, 0)
-		score_lbl.add_theme_font_size_override("font_size", 15)
+		score_lbl.custom_minimum_size = Vector2(90, 0)
+		score_lbl.add_theme_font_size_override("font_size", 22)
 		score_lbl.add_theme_color_override("font_color", Color(0.0, 0.9, 1.0))
 		row.add_child(score_lbl)
 
 		var date_lbl = Label.new()
 		date_lbl.text = str(entry.get("date", "2026-10-01"))
 		date_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		date_lbl.add_theme_font_size_override("font_size", 13)
-		date_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
+		date_lbl.add_theme_font_size_override("font_size", 18)
+		date_lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
 		row.add_child(date_lbl)
 		
 		score_list.add_child(row)

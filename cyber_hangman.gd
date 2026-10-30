@@ -1,12 +1,36 @@
 extends Control
 
-const WORDS = [
-	"CODE", "HACK", "DATA", "NODE", "CHIP", "BYTE", "SYNC", "LINK", "GRID", "NET", 
-	"SYSTEM", "VIRUS", "ACCESS", "SERVER", "CORE", "GLITCH", "FIREWALL", "OVERRIDE", 
-	"PROTOCOL", "SYNTHWAVE", "TERMINAL", "MATRIX", "NETRUNNER", "VAPORWAVE", "CYBERPUNK"
-]
+# Words paired with immersive contextual sentence hints
+const WORD_DATABASE = {
+	"CODE": "Used for compiling core software routines and logic instructions.",
+	"HACK": "The primary method used by netrunners to bypass core security nodes.",
+	"DATA": "Raw digital packets flowing continuously across the mainframe network.",
+	"NODE": "A localized junction point connecting different sectors of the system.",
+	"CHIP": "Hardware-level processing unit embedded into cybernetic neural links.",
+	"BYTE": "A foundational unit of digital information storage.",
+	"SYNC": "The required state for aligning frequency pulses across the mainframe.",
+	"LINK": "A secure transmission bridge established between two terminals.",
+	"GRID": "The massive virtual infrastructure spanning the entire cyberpunk city.",
+	"NET": "The global web of interconnected servers and databanks.",
+	"SYSTEM": "The overarching automated mainframe governing all municipal sectors.",
+	"VIRUS": "Malicious self-replicating code designed to corrupt memory clusters.",
+	"ACCESS": "Granted or denied privilege level required to bypass security gates.",
+	"SERVER": "A heavy-duty remote core unit housing critical mainframe files.",
+	"CORE": "The central processing heart of the mainframe architecture.",
+	"GLITCH": "A sudden visual or logic anomaly caused by system instability.",
+	"FIREWALL": "Aggressive network security barrier designed to block unauthorized intruders.",
+	"OVERRIDE": "Manual command sequence used to force system compliance.",
+	"PROTOCOL": "A strict set of rules governing secure data transmission.",
+	"SYNTHWAVE": "The iconic audio frequency style echoing through the neon underground.",
+	"TERMINAL": "An individual access station connected to the central mainframe.",
+	"MATRIX": "The deep multi-dimensional data grid navigated by expert netrunners.",
+	"NETRUNNER": "An elite cyber-operative who dives directly into corporate networks.",
+	"VAPORWAVE": "A nostalgic retro-aesthetic style drenched in pink and cyan hues.",
+	"CYBERPUNK": "A high-tech, low-life society ruled by corrupt mega-corporations."
+}
 
 var secret_word: String = ""
+var word_hint_sentence: String = ""
 var guessed_letters: Array = []
 var max_attempts: int = 6
 var remaining_attempts: int = 6
@@ -41,7 +65,10 @@ func _ready() -> void:
 	setup_crt_overlay()
 	
 	randomize()
-	secret_word = WORDS.pick_random()
+	var all_keys = WORD_DATABASE.keys()
+	secret_word = all_keys.pick_random()
+	word_hint_sentence = WORD_DATABASE[secret_word]
+	
 	remaining_attempts = max_attempts
 	corruption_time_left = corruption_time_max
 	
@@ -195,15 +222,15 @@ func setup_terminal_ui() -> void:
 	card_style.corner_radius_top_right = 12
 	card_style.corner_radius_bottom_left = 12
 	card_style.corner_radius_bottom_right = 12
-	card_style.content_margin_left = 30
-	card_style.content_margin_right = 30
-	card_style.content_margin_top = 25
-	card_style.content_margin_bottom = 25
+	card_style.content_margin_left = 25
+	card_style.content_margin_right = 25
+	card_style.content_margin_top = 20
+	card_style.content_margin_bottom = 20
 	outer_panel.add_theme_stylebox_override("panel", card_style)
 	full_screen_center.add_child(outer_panel)
 	
 	var vbox = VBoxContainer.new()
-	vbox.custom_minimum_size = Vector2(560, 920)
+	vbox.custom_minimum_size = Vector2(620, 1060) # Expanded container to house enlarged hint box and keyboard
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	vbox.add_theme_constant_override("separation", 12)
 	outer_panel.add_child(vbox)
@@ -221,21 +248,21 @@ func setup_terminal_ui() -> void:
 	var term_num = main_script.current_level if main_script else 7
 	title.text = "TERMINAL " + str(term_num) + ": DATA MATRIX"
 	
-	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_font_size_override("font_size", 24)
 	title.add_theme_color_override("font_color", Color(1.0, 0.7, 0.0))
 	title_box.add_child(title)
 	
 	var subtitle = Label.new()
 	subtitle.text = "// TWISTED SECURITY HANGMAN & TIME-BOMB //"
-	subtitle.add_theme_font_size_override("font_size", 11)
+	subtitle.add_theme_font_size_override("font_size", 12)
 	subtitle.add_theme_color_override("font_color", Color(1.0, 0.0, 0.4))
 	title_box.add_child(subtitle)
 	top_bar.add_child(title_box)
 	
 	var pause_btn = Button.new()
 	pause_btn.text = "❚❚"
-	pause_btn.custom_minimum_size = Vector2(45, 45)
-	pause_btn.add_theme_font_size_override("font_size", 16)
+	pause_btn.custom_minimum_size = Vector2(50, 50)
+	pause_btn.add_theme_font_size_override("font_size", 18)
 	pause_btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	
 	var btn_style = StyleBoxFlat.new()
@@ -263,7 +290,7 @@ func setup_terminal_ui() -> void:
 	corruption_warning_label = Label.new()
 	corruption_warning_label.text = "⚠ DATA CORRUPTION TIME-BOMB TICKING ⚠"
 	corruption_warning_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	corruption_warning_label.add_theme_font_size_override("font_size", 11)
+	corruption_warning_label.add_theme_font_size_override("font_size", 12)
 	corruption_warning_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.2))
 	timer_vbox.add_child(corruption_warning_label)
 	
@@ -293,7 +320,7 @@ func setup_terminal_ui() -> void:
 
 	# Cyber Core Hangman Graphic
 	hangman_visual_node = CyberHangmanVisual.new()
-	hangman_visual_node.custom_minimum_size = Vector2(480, 150)
+	hangman_visual_node.custom_minimum_size = Vector2(520, 140)
 	hangman_visual_node.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	vbox.add_child(hangman_visual_node)
 	
@@ -324,50 +351,51 @@ func setup_terminal_ui() -> void:
 	
 	word_display_label = Label.new()
 	word_display_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	word_display_label.add_theme_font_size_override("font_size", 28)
+	word_display_label.add_theme_font_size_override("font_size", 32)
 	word_display_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	panel_vbox.add_child(word_display_label)
 	
 	attempts_label = Label.new()
 	attempts_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	attempts_label.add_theme_font_size_override("font_size", 13)
+	attempts_label.add_theme_font_size_override("font_size", 14)
 	attempts_label.add_theme_color_override("font_color", Color(1.0, 0.0, 0.6))
 	panel_vbox.add_child(attempts_label)
 	
-	# --- LIVE TERMINAL LOG CONSOLE PANEL ---
+	# --- ENLARGED & READABLE LIVE TERMINAL LOG CONSOLE PANEL ---
 	var log_panel = PanelContainer.new()
 	var log_style = StyleBoxFlat.new()
 	log_style.bg_color = Color(0.01, 0.005, 0.03, 0.98)
-	log_style.border_width_left = 1
-	log_style.border_width_top = 1
-	log_style.border_width_right = 1
-	log_style.border_width_bottom = 1
-	log_style.border_color = Color(0.0, 0.9, 1.0, 0.5)
-	log_style.corner_radius_top_left = 6
-	log_style.corner_radius_top_right = 6
-	log_style.corner_radius_bottom_left = 6
-	log_style.corner_radius_bottom_right = 6
-	log_style.content_margin_left = 12
-	log_style.content_margin_top = 8
-	log_style.content_margin_right = 12
-	log_style.content_margin_bottom = 8
+	log_style.border_width_left = 2
+	log_style.border_width_top = 2
+	log_style.border_width_right = 2
+	log_style.border_width_bottom = 2
+	log_style.border_color = Color(0.0, 0.9, 1.0, 0.8)
+	log_style.corner_radius_top_left = 8
+	log_style.corner_radius_top_right = 8
+	log_style.corner_radius_bottom_left = 8
+	log_style.corner_radius_bottom_right = 8
+	log_style.content_margin_left = 16
+	log_style.content_margin_top = 12
+	log_style.content_margin_right = 16
+	log_style.content_margin_bottom = 12
 	log_panel.add_theme_stylebox_override("panel", log_style)
-	log_panel.custom_minimum_size = Vector2(0, 60)
+	log_panel.custom_minimum_size = Vector2(0, 95) # Enlarged height for comfortable reading
 	vbox.add_child(log_panel)
 	
 	terminal_log_label = Label.new()
 	terminal_log_label.text = "> SYSTEM INITIALIZED..."
 	terminal_log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	terminal_log_label.add_theme_font_size_override("font_size", 11)
-	terminal_log_label.add_theme_color_override("font_color", Color(0.0, 1.0, 0.7, 0.9))
+	# --- ENLARGED FONT SIZE FOR MOBILE READABILITY ---
+	terminal_log_label.add_theme_font_size_override("font_size", 18)
+	terminal_log_label.add_theme_color_override("font_color", Color(0.0, 1.0, 0.7, 0.95))
 	log_panel.add_child(terminal_log_label)
 	
-	# Tactical Hint Button
+	# Contextual Sentence Hint Button
 	hint_btn = Button.new()
-	hint_btn.text = "⚡ REQUEST BACKDOOR HINT (1 LEFT) ⚡"
-	hint_btn.custom_minimum_size = Vector2(340, 40)
+	hint_btn.text = "⚡ REQUEST CONTEXT HINT (1 LEFT) ⚡"
+	hint_btn.custom_minimum_size = Vector2(380, 48)
 	hint_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	hint_btn.add_theme_font_size_override("font_size", 13)
+	hint_btn.add_theme_font_size_override("font_size", 15)
 	hint_btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	
 	var hint_style = StyleBoxFlat.new()
@@ -384,13 +412,13 @@ func setup_terminal_ui() -> void:
 	hint_btn.add_theme_stylebox_override("normal", hint_style)
 	hint_btn.add_theme_stylebox_override("hover", hint_style)
 	hint_btn.add_theme_stylebox_override("pressed", hint_style)
-	hint_btn.pressed.connect(use_backdoor_hint)
+	hint_btn.pressed.connect(use_context_hint)
 	vbox.add_child(hint_btn)
 	
-	# Virtual Keyboard
+	# Virtual Keyboard (Centered and Enlarged for effortless tapping)
 	keyboard_container = VBoxContainer.new()
 	keyboard_container.alignment = BoxContainer.ALIGNMENT_CENTER
-	keyboard_container.add_theme_constant_override("separation", 5)
+	keyboard_container.add_theme_constant_override("separation", 8)
 	vbox.add_child(keyboard_container)
 	
 	update_word_display()
@@ -400,30 +428,19 @@ func append_terminal_log(msg: String) -> void:
 	if terminal_log_label:
 		terminal_log_label.text = "> " + msg
 
-func use_backdoor_hint() -> void:
+func use_context_hint() -> void:
 	if hints_remaining <= 0:
 		return
 		
 	hints_remaining -= 1
-	hint_btn.text = "⚡ BACKDOOR HINT USED ⚡"
+	hint_btn.text = "⚡ CONTEXT HINT DEPLOYED ⚡"
 	hint_btn.disabled = true
 	
 	corruption_time_left = corruption_time_max # Reset bomb timer on hint use
+	play_cyber_sfx("hint")
 	
-	var unrevealed = []
-	for i in range(secret_word.length()):
-		var c = secret_word[i]
-		if not c in guessed_letters:
-			if not c in unrevealed:
-				unrevealed.append(c)
-				
-	if unrevealed.size() > 0:
-		var hint_char = unrevealed.pick_random()
-		guessed_letters.append(hint_char)
-		play_cyber_sfx("hint")
-		append_terminal_log("BACKDOOR ROUTE FOUND: DECRYPTED KEY BYTE '" + hint_char + "'. TIME-BOMB RESET!")
-		update_word_display()
-		build_virtual_keyboard()
+	# Display the contextual sentence hint in the terminal log with high-contrast formatting!
+	append_terminal_log("CONTEXT HINT: " + word_hint_sentence)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and (event.keycode == KEY_ESCAPE or event.keycode == KEY_P):
@@ -479,7 +496,7 @@ func show_pause_overlay() -> void:
 func create_menu_btn(parent: Node, text: String, border_color: Color, callback: Callable) -> void:
 	var btn = Button.new()
 	btn.text = text
-	btn.custom_minimum_size = Vector2(320, 50)
+	btn.custom_minimum_size = Vector2(340, 52)
 	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	btn.add_theme_font_size_override("font_size", 16)
 	btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
@@ -509,7 +526,6 @@ func update_word_display() -> void:
 		if c in guessed_letters:
 			displayed_text += c + " "
 		else:
-			# --- CORRUPTION TWIST: Show # or ? for unrevealed letters ---
 			var placeholder = "#" if (i % 2 == 0) else "?"
 			displayed_text += placeholder + " "
 			all_guessed = false
@@ -529,17 +545,19 @@ func update_word_display() -> void:
 func build_virtual_keyboard() -> void:
 	for child in keyboard_container.get_children():
 		child.queue_free()
+	
 	var rows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]
 	for r in rows:
 		var row_box = HBoxContainer.new()
 		row_box.alignment = BoxContainer.ALIGNMENT_CENTER
-		row_box.add_theme_constant_override("separation", 5)
+		row_box.add_theme_constant_override("separation", 6)
+		
 		for i in range(r.length()):
 			var letter = r[i]
 			var btn = Button.new()
 			btn.text = letter
-			btn.custom_minimum_size = Vector2(44, 44)
-			btn.add_theme_font_size_override("font_size", 15)
+			btn.custom_minimum_size = Vector2(54, 60)
+			btn.add_theme_font_size_override("font_size", 22)
 			
 			var btn_style = StyleBoxFlat.new()
 			btn_style.bg_color = Color(0.06, 0.04, 0.12, 0.95)
@@ -547,21 +565,25 @@ func build_virtual_keyboard() -> void:
 			btn_style.border_width_top = 2
 			btn_style.border_width_right = 2
 			btn_style.border_width_bottom = 2
+			
 			if letter in guessed_letters:
 				btn_style.border_color = Color(0.3, 0.3, 0.3)
 				btn.disabled = true
 			else:
 				btn_style.border_color = Color(1.0, 0.0, 0.6)
-			btn_style.corner_radius_top_left = 6
-			btn_style.corner_radius_top_right = 6
-			btn_style.corner_radius_bottom_left = 6
-			btn_style.corner_radius_bottom_right = 6
+				
+			btn_style.corner_radius_top_left = 8
+			btn_style.corner_radius_top_right = 8
+			btn_style.corner_radius_bottom_left = 8
+			btn_style.corner_radius_bottom_right = 8
+			
 			btn.add_theme_stylebox_override("normal", btn_style)
 			btn.add_theme_stylebox_override("hover", btn_style)
 			btn.add_theme_stylebox_override("pressed", btn_style)
 			btn.add_theme_stylebox_override("disabled", btn_style)
 			btn.pressed.connect(func(): handle_guess(letter))
 			row_box.add_child(btn)
+			
 		keyboard_container.add_child(row_box)
 
 func handle_guess(letter: String) -> void:
@@ -651,7 +673,6 @@ func trigger_victory() -> void:
 	sub_lbl.add_theme_color_override("font_color", Color(1.0, 0.0, 0.4))
 	vbox.add_child(sub_lbl)
 	
-	# Stats Breakdown Container
 	var stats_panel = PanelContainer.new()
 	var stats_style = StyleBoxFlat.new()
 	stats_style.bg_color = Color(0.01, 0.005, 0.03, 0.95)
@@ -694,13 +715,12 @@ func trigger_victory() -> void:
 	score_lbl.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
 	stats_vbox.add_child(score_lbl)
 	
-	# Proceed Button
 	var proceed_btn = Button.new()
 	var next_target = current_term + 1
 	proceed_btn.text = "▶ PROCEED TO TERMINAL " + str(next_target)
-	proceed_btn.custom_minimum_size = Vector2(340, 42)
+	proceed_btn.custom_minimum_size = Vector2(340, 46)
 	proceed_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	proceed_btn.add_theme_font_size_override("font_size", 14)
+	proceed_btn.add_theme_font_size_override("font_size", 15)
 	proceed_btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	
 	var btn_style = StyleBoxFlat.new()
@@ -727,12 +747,11 @@ func trigger_victory() -> void:
 	)
 	vbox.add_child(proceed_btn)
 	
-	# Main Menu Button
 	var menu_btn = Button.new()
 	menu_btn.text = "⌂ RETURN TO MAIN MENU"
-	menu_btn.custom_minimum_size = Vector2(340, 42)
+	menu_btn.custom_minimum_size = Vector2(340, 46)
 	menu_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	menu_btn.add_theme_font_size_override("font_size", 14)
+	menu_btn.add_theme_font_size_override("font_size", 15)
 	menu_btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	
 	var menu_style = StyleBoxFlat.new()
@@ -774,29 +793,104 @@ func trigger_game_over() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	canvas.add_child(center)
 	
+	var panel = PanelContainer.new()
+	panel.custom_minimum_size = Vector2(420, 360)
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.08, 0.02, 0.04, 0.98)
+	panel_style.border_width_left = 3
+	panel_style.border_width_top = 3
+	panel_style.border_width_right = 3
+	panel_style.border_width_bottom = 3
+	panel_style.border_color = Color(1.0, 0.0, 0.4)
+	panel_style.corner_radius_top_left = 12
+	panel_style.corner_radius_top_right = 12
+	panel_style.corner_radius_bottom_left = 12
+	panel_style.corner_radius_bottom_right = 12
+	panel_style.content_margin_left = 25
+	panel_style.content_margin_right = 25
+	panel_style.content_margin_top = 25
+	panel_style.content_margin_bottom = 25
+	panel.add_theme_stylebox_override("panel", panel_style)
+	center.add_child(panel)
+	
 	var vbox = VBoxContainer.new()
-	vbox.custom_minimum_size = Vector2(400, 300)
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.add_theme_constant_override("separation", 20)
-	center.add_child(vbox)
+	vbox.add_theme_constant_override("separation", 15)
+	panel.add_child(vbox)
 	
 	var lbl = Label.new()
-	lbl.text = "TIME-BOMB DETONATED!"
+	lbl.text = "⚠ SYSTEM LOCKOUT ⚠"
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 28)
-	lbl.add_theme_color_override("font_color", Color(1.0, 0.1, 0.1))
+	lbl.add_theme_font_size_override("font_size", 26)
+	lbl.add_theme_color_override("font_color", Color(1.0, 0.0, 0.4))
 	vbox.add_child(lbl)
 	
-	var btn = Button.new()
-	btn.text = "↺ RETRY DATA MATRIX"
-	btn.custom_minimum_size = Vector2(320, 50)
-	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	btn.pressed.connect(func():
+	var sub_lbl = Label.new()
+	sub_lbl.text = "DECRYPTION FAILED. SECRET KEY WAS: " + secret_word
+	sub_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sub_lbl.add_theme_font_size_override("font_size", 13)
+	sub_lbl.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
+	vbox.add_child(sub_lbl)
+	
+	var retry_btn = Button.new()
+	retry_btn.text = "↺ RE-ATTEMPT HACK"
+	retry_btn.custom_minimum_size = Vector2(340, 46)
+	retry_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	retry_btn.add_theme_font_size_override("font_size", 15)
+	retry_btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	
+	var btn_style = StyleBoxFlat.new()
+	btn_style.bg_color = Color(0.06, 0.04, 0.14, 0.95)
+	btn_style.border_width_left = 2
+	btn_style.border_width_top = 2
+	btn_style.border_width_right = 2
+	btn_style.border_width_bottom = 2
+	btn_style.border_color = Color(1.0, 0.0, 0.4)
+	btn_style.corner_radius_top_left = 6
+	btn_style.corner_radius_top_right = 6
+	btn_style.corner_radius_bottom_left = 6
+	btn_style.corner_radius_bottom_right = 6
+	retry_btn.add_theme_stylebox_override("normal", btn_style)
+	retry_btn.add_theme_stylebox_override("hover", btn_style)
+	retry_btn.add_theme_stylebox_override("pressed", btn_style)
+	
+	retry_btn.pressed.connect(func():
 		get_tree().paused = false
 		canvas.queue_free()
 		get_tree().reload_current_scene()
 	)
-	vbox.add_child(btn)
+	vbox.add_child(retry_btn)
+	
+	var menu_btn = Button.new()
+	menu_btn.text = "⌂ RETURN TO MAIN MENU"
+	menu_btn.custom_minimum_size = Vector2(340, 46)
+	menu_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	menu_btn.add_theme_font_size_override("font_size", 15)
+	menu_btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	
+	var menu_style = StyleBoxFlat.new()
+	menu_style.bg_color = Color(0.06, 0.04, 0.14, 0.95)
+	menu_style.border_width_left = 2
+	menu_style.border_width_top = 2
+	menu_style.border_width_right = 2
+	menu_style.border_width_bottom = 2
+	menu_style.border_color = Color(0.0, 0.9, 1.0)
+	menu_style.corner_radius_top_left = 6
+	menu_style.corner_radius_top_right = 6
+	menu_style.corner_radius_bottom_left = 6
+	menu_style.corner_radius_bottom_right = 6
+	menu_btn.add_theme_stylebox_override("normal", menu_style)
+	menu_btn.add_theme_stylebox_override("hover", menu_style)
+	menu_btn.add_theme_stylebox_override("pressed", menu_style)
+	
+	menu_btn.pressed.connect(func():
+		get_tree().paused = false
+		canvas.queue_free()
+		get_tree().change_scene_to_file("res://menu.tscn")
+	)
+	vbox.add_child(menu_btn)
+	
 	get_tree().root.add_child(canvas)
 
 # --- CRT SCANLINE SHADER LAYER ---
@@ -832,68 +926,37 @@ class CyberHangmanVisual extends Control:
 			draw_line(center_pt + Vector2(25, 25), center_pt + Vector2(50, 50), pink, 3.0)
 			draw_circle(center_pt + Vector2(50, 50), 4.0, pink)
 		if errors_count >= 5:
-			draw_line(center_pt + Vector2(0, -45), center_pt + Vector2(0, -70), pink, 3.0)
-			draw_circle(center_pt + Vector2(0, -70), 5.0, pink)
+			draw_line(center_pt + Vector2(0, -45), center_pt + Vector2(0, -70), Color(1.0, 1.0, 0.0), 3.0)
 		if errors_count >= 6:
-			draw_line(center_pt + Vector2(0, 45), center_pt + Vector2(0, 70), pink, 3.0)
-			draw_circle(center_pt + Vector2(0, 70), 5.0, pink)
-			draw_line(center_pt + Vector2(-15, -15), center_pt + Vector2(15, 15), pink, 3.0)
-			draw_line(center_pt + Vector2(15, -15), center_pt + Vector2(-15, 15), pink, 3.0)
+			draw_arc(center_pt, 55.0, 0, TAU, 16, Color(1.0, 0.0, 0.0), 3.0)
 
-# --- FULLSCREEN SEAMLESS VAPORWAVE BACKGROUND DRAWER ---
+# --- VAPORWAVE GRID BACKGROUND ---
 class VaporwaveBackground extends Control:
-	var scroll_offset: float = 0.0
+	var grid_offset: float = 0.0
 	
 	func _process(delta: float) -> void:
-		scroll_offset += delta * 40.0
-		if scroll_offset > 100.0:
-			scroll_offset = 0.0
+		grid_offset += delta * 40.0
+		if grid_offset > 50.0:
+			grid_offset = 0.0
 		queue_redraw()
 		
 	func _draw() -> void:
-		var sz = get_viewport_rect().size
-		var horizon_y = sz.y * 0.45 
-		
-		draw_rect(Rect2(0, 0, sz.x, horizon_y), Color(0.08, 0.02, 0.18))
+		var sz = size
+		var horizon_y = sz.y * 0.52
+		draw_rect(Rect2(0, 0, sz.x, horizon_y), Color(0.07, 0.02, 0.14))
 		
 		var sun_center = Vector2(sz.x * 0.5, horizon_y - 20)
-		var sun_radius = 85.0
+		var sun_radius = 75.0
+		for i in range(10):
+			var r = sun_radius - (i * 4)
+			var alpha = 0.15 + (i * 0.04)
+			draw_circle(sun_center, r, Color(1.0, 0.35, 0.65, alpha))
+			
+		draw_rect(Rect2(0, horizon_y, sz.x, sz.y - horizon_y), Color(0.02, 0.01, 0.05))
+		draw_line(Vector2(0, horizon_y), Vector2(sz.x, horizon_y), Color(1.0, 0.0, 0.7), 2.5)
+		
+		var vp = Vector2(sz.x * 0.5, horizon_y)
 		for i in range(12):
-			var r = sun_radius - (i * 5)
-			var alpha = 0.15 + (i * 0.03)
-			draw_circle(sun_center, r, Color(1.0, 0.3, 0.6, alpha))
-		
-		for y_off in range(-int(sun_radius), int(sun_radius), 12):
-			if y_off > 0:
-				var slice_y = sun_center.y + y_off
-				var w = sqrt(sun_radius * sun_radius - y_off * y_off)
-				draw_rect(Rect2(sun_center.x - w, slice_y, w * 2, 4), Color(0.08, 0.02, 0.18))
-
-		var mountain_color = Color(0.05, 0.02, 0.12)
-		var wire_color = Color(1.0, 0.0, 0.6, 0.4)
-		
-		var peaks = [
-			Vector2(0, horizon_y),
-			Vector2(sz.x * 0.2, horizon_y - 120),
-			Vector2(sz.x * 0.4, horizon_y - 60),
-			Vector2(sz.x * 0.6, horizon_y - 150),
-			Vector2(sz.x * 0.8, horizon_y - 90),
-			Vector2(sz.x, horizon_y)
-		]
-		
-		var poly_points = PackedVector2Array()
-		poly_points.append(Vector2(0, horizon_y))
-		for p in peaks: poly_points.append(p)
-		poly_points.append(Vector2(sz.x, horizon_y))
-		draw_polygon(poly_points, PackedColorArray([mountain_color]))
-		
-		for i in range(peaks.size() - 1):
-			draw_line(peaks[i], peaks[i+1], wire_color, 2.0)
-
-		draw_rect(Rect2(0, horizon_y, sz.x, sz.y - horizon_y), Color(0.02, 0.01, 0.06))
-		draw_line(Vector2(0, horizon_y), Vector2(sz.x, horizon_y), Color(0.0, 1.0, 0.9), 3.0)
-		
-		var grid_step = 40.0
-		for i in range(int(sz.x / grid_step) + 5):
-			var x_pos = (i * grid_step) - fmod(scroll_offset * 2.0, grid_step)
-			draw_line(Vector2(x_pos, horizon_y), Vector2((x_pos - sz.x * 0.5) * 1.8 + sz.x * 0.5, sz.y), Color(1.0, 0.0, 0.6, 0.15), 1.5)
+			var t = float(i) / 11.0
+			var bx = (t * sz.x * 2.0) - (sz.x * 0.5)
+			draw_line(vp, Vector2(bx, sz.y), Color(0.0, 0.9, 1.0, 0.3), 1.2)

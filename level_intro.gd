@@ -23,7 +23,7 @@ func _ready() -> void:
 
 func setup_intro_ui() -> void:
 	var dark_rect = ColorRect.new()
-	dark_rect.color = Color(0.02, 0.01, 0.05, 0.92)
+	dark_rect.color = Color(0.02, 0.01, 0.05, 0.96)
 	dark_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(dark_rect)
 	
@@ -31,15 +31,37 @@ func setup_intro_ui() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	
+	# --- LARGE PHONE-OPTIMIZED CYBER CARD PANEL ---
+	var panel = PanelContainer.new()
+	panel.custom_minimum_size = Vector2(620, 640)
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.04, 0.02, 0.12, 0.98)
+	panel_style.border_width_left = 4
+	panel_style.border_width_top = 4
+	panel_style.border_width_right = 4
+	panel_style.border_width_bottom = 4
+	panel_style.border_color = Color(0.0, 0.9, 1.0)
+	panel_style.corner_radius_top_left = 16
+	panel_style.corner_radius_top_right = 16
+	panel_style.corner_radius_bottom_left = 16
+	panel_style.corner_radius_bottom_right = 16
+	panel_style.content_margin_left = 35
+	panel_style.content_margin_right = 35
+	panel_style.content_margin_top = 35
+	panel_style.content_margin_bottom = 35
+	panel.add_theme_stylebox_override("panel", panel_style)
+	center.add_child(panel)
+	
 	var vbox = VBoxContainer.new()
-	vbox.custom_minimum_size = Vector2(450, 420)
-	vbox.add_theme_constant_override("separation", 20)
-	center.add_child(vbox)
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 24)
+	panel.add_child(vbox)
 	
 	var title = Label.new()
 	title.text = "TERMINAL SECTOR " + ("0" + str(level_num) if level_num < 10 else str(level_num))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 30)
+	# --- MASSIVE TITLE FONT ---
+	title.add_theme_font_size_override("font_size", 44)
 	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
 	vbox.add_child(title)
 	
@@ -82,30 +104,33 @@ func setup_intro_ui() -> void:
         """
 		
 	var desc_label = Label.new()
-	desc_label.text = objective_desc
+	desc_label.text = objective_desc.strip_edges()
 	desc_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	desc_label.add_theme_font_size_override("font_size", 14)
-	desc_label.add_theme_color_override("font_color", Color(0.0, 0.9, 1.0))
+	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# --- HUGE PHONE-READABLE DESCRIPTION FONT ---
+	desc_label.add_theme_font_size_override("font_size", 22)
+	desc_label.add_theme_color_override("font_color", Color(0.9, 0.95, 1.0))
 	vbox.add_child(desc_label)
 	
 	var btn = Button.new()
 	btn.text = "▶ BEGIN PROTOCOL"
-	btn.custom_minimum_size = Vector2(300, 50)
+	# --- EXTRA LARGE MOBILE TOUCH BUTTON ---
+	btn.custom_minimum_size = Vector2(440, 68)
 	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	btn.add_theme_font_size_override("font_size", 16)
+	btn.add_theme_font_size_override("font_size", 24)
 	btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.06, 0.04, 0.12, 0.95)
-	style.border_width_left = 2
-	style.border_width_top = 2
-	style.border_width_right = 2
-	style.border_width_bottom = 2
+	style.bg_color = Color(0.06, 0.04, 0.14, 0.95)
+	style.border_width_left = 3
+	style.border_width_top = 3
+	style.border_width_right = 3
+	style.border_width_bottom = 3
 	style.border_color = Color(0.0, 0.9, 1.0)
-	style.corner_radius_top_left = 8
-	style.corner_radius_top_right = 8
-	style.corner_radius_bottom_left = 8
-	style.corner_radius_bottom_right = 8
+	style.corner_radius_top_left = 10
+	style.corner_radius_top_right = 10
+	style.corner_radius_bottom_left = 10
+	style.corner_radius_bottom_right = 10
 	
 	btn.add_theme_stylebox_override("normal", style)
 	btn.add_theme_stylebox_override("hover", style)

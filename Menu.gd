@@ -63,27 +63,27 @@ func setup_cyber_menu() -> void:
 
 	var vbox = VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.custom_minimum_size = Vector2(450, 750)
+	vbox.custom_minimum_size = Vector2(520, 840)
 	center_container.add_child(vbox)
 
 	var title_label = Label.new()
 	title_label.text = "ORB FLOW"
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_label.add_theme_font_size_override("font_size", 64)
+	title_label.add_theme_font_size_override("font_size", 84)
 	title_label.add_theme_color_override("font_color", Color(0.0, 0.95, 1.0))
 	title_label.add_theme_color_override("font_outline_color", Color(1.0, 0.0, 0.5))
-	title_label.add_theme_constant_override("outline_size", 12)
+	title_label.add_theme_constant_override("outline_size", 16)
 	vbox.add_child(title_label)
 
 	var subtitle_label = Label.new()
 	subtitle_label.text = "// VAPORWAVE GRAVITY PROTOCOL //"
 	subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle_label.add_theme_font_size_override("font_size", 16)
+	subtitle_label.add_theme_font_size_override("font_size", 17)
 	subtitle_label.add_theme_color_override("font_color", Color(1.0, 0.0, 0.6))
 	vbox.add_child(subtitle_label)
 
 	var spacer = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 15)
+	spacer.custom_minimum_size = Vector2(0, 25)
 	vbox.add_child(spacer)
 
 	create_cyber_button(vbox, "▶ INITIATE GAME", Color(0.0, 0.9, 1.0), func():
@@ -112,8 +112,8 @@ func setup_cyber_menu() -> void:
 
 	add_menu_spacer(vbox)
 
-	# --- SETTINGS OVERLAY ---
-	create_cyber_button(vbox, "🛠 SETTINGS", Color(1.0, 0.0, 0.5), func():
+	# --- SPICED UP SETTINGS OVERLAY ---
+	create_cyber_button(vbox, "🛠 SYSTEM SETTINGS", Color(1.0, 0.0, 0.5), func():
 		play_menu_click_sfx()
 		show_settings_overlay()
 	)
@@ -136,54 +136,13 @@ func setup_cyber_menu() -> void:
 		get_tree().quit()
 	)
 
-	var spacer2 = Control.new()
-	spacer2.custom_minimum_size = Vector2(0, 15)
-	vbox.add_child(spacer2)
-
-	# --- DEVELOPER CHEATS DISPLAY PANEL ---
-	var cheat_panel = PanelContainer.new()
-	var panel_style = StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.04, 0.02, 0.1, 0.85)
-	panel_style.border_width_left = 2
-	panel_style.border_width_top = 2
-	panel_style.border_width_right = 2
-	panel_style.border_width_bottom = 2
-	panel_style.border_color = Color(1.0, 0.0, 0.8, 0.8)
-	panel_style.corner_radius_top_left = 6
-	panel_style.corner_radius_top_right = 6
-	panel_style.corner_radius_bottom_left = 6
-	panel_style.corner_radius_bottom_right = 6
-	panel_style.content_margin_left = 15
-	panel_style.content_margin_right = 15
-	panel_style.content_margin_top = 8
-	panel_style.content_margin_bottom = 8
-	cheat_panel.add_theme_stylebox_override("panel", panel_style)
-	vbox.add_child(cheat_panel)
-
-	var cheat_vbox = VBoxContainer.new()
-	cheat_panel.add_child(cheat_vbox)
-
-	var cheat_title = Label.new()
-	cheat_title.text = "⚡ DEV TESTING SHORTCUTS ⚡"
-	cheat_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cheat_title.add_theme_font_size_override("font_size", 12)
-	cheat_title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
-	cheat_vbox.add_child(cheat_title)
-
-	var cheat_details = Label.new()
-	cheat_details.text = "[1 - 10] : Jump to Level\n[ N ] : Instant Win / Skip Level\n[ R ] : Quick Restart Level"
-	cheat_details.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cheat_details.add_theme_font_size_override("font_size", 11)
-	cheat_details.add_theme_color_override("font_color", Color(0.0, 1.0, 0.9, 0.9))
-	cheat_vbox.add_child(cheat_details)
-
 func show_how_to_play() -> void:
 	var canvas = CanvasLayer.new()
 	canvas.name = "HowToPlayOverlay"
 	canvas.layer = 100
 	
 	var dark_rect = ColorRect.new()
-	dark_rect.color = Color(0.02, 0.01, 0.05, 0.92)
+	dark_rect.color = Color(0.02, 0.01, 0.05, 0.96)
 	dark_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	canvas.add_child(dark_rect)
 	
@@ -191,61 +150,103 @@ func show_how_to_play() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	canvas.add_child(center)
 	
+	var panel = PanelContainer.new()
+	panel.custom_minimum_size = Vector2(620, 880)
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.04, 0.02, 0.12, 0.98)
+	panel_style.border_width_left = 4
+	panel_style.border_width_top = 4
+	panel_style.border_width_right = 4
+	panel_style.border_width_bottom = 4
+	panel_style.border_color = Color(1.0, 0.85, 0.0)
+	panel_style.corner_radius_top_left = 16
+	panel_style.corner_radius_top_right = 16
+	panel_style.corner_radius_bottom_left = 16
+	panel_style.corner_radius_bottom_right = 16
+	panel_style.content_margin_left = 30
+	panel_style.content_margin_right = 30
+	panel_style.content_margin_top = 30
+	panel_style.content_margin_bottom = 30
+	panel.add_theme_stylebox_override("panel", panel_style)
+	center.add_child(panel)
+	
 	var vbox = VBoxContainer.new()
-	vbox.custom_minimum_size = Vector2(450, 720)
-	vbox.add_theme_constant_override("separation", 15)
-	center.add_child(vbox)
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 20)
+	panel.add_child(vbox)
 	
 	var title = Label.new()
-	title.text = "HOW TO PLAY"
+	title.text = "⚡ OPERATIONAL MANUAL ⚡"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 34)
+	title.add_theme_font_size_override("font_size", 38)
 	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
 	vbox.add_child(title)
 	
-	var info_text = Label.new()
-	info_text.text = """
-    [ MODE 1: PUZZLE ORB FLOW ]
-    • Draw lines with your finger/mouse to guide the Orb.
-    • Collect all stars and hit the goal matrix.
-    • Avoid red hazards and obstacles!
-
-    [ MODE 2: CYBER HANGMAN — TERMINAL 3 & 7 ]
-    • Tap virtual keys to decrypt the encryption key.
-    • Defuse the time-bomb before it re-encrypts your bytes!
-
-    [ MODE 3: NEON COLOR SWITCH — TERMINAL 6 ]
-    • Switch your frequency color to match incoming pulses.
-    • Clear all synchronization sequences to win!
-
-    [ MODE 4: ICE BREAKER — TERMINAL 8 ]
-    • Navigate through static and sweeping laser grids with generous ink.
-
-    [ MODE 5: SPACE SHOOTER — TERMINAL 2, 4, & 9 ]
-    • Pilot your starfighter and blast incoming cyber threats.
-    • Survive enemy waves to clear the defense protocol!
-
-    [ MODE 6: DATA UNBLOCK — TERMINAL 10 ]
-    • Slide firewall blocks to clear a path for the Red Key Node!
-    """
-	info_text.add_theme_font_size_override("font_size", 11)
-	info_text.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
-	vbox.add_child(info_text)
+	var sub = Label.new()
+	sub.text = "// MAINFRAME PROTOCOL REFERENCE //"
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub.add_theme_font_size_override("font_size", 15)
+	sub.add_theme_color_override("font_color", Color(1.0, 0.0, 0.5))
+	vbox.add_child(sub)
 	
-	create_cyber_button(vbox, "✖ CLOSE", Color(1.0, 0.0, 0.5), func():
+	var scroll = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(560, 580)
+	scroll.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	vbox.add_child(scroll)
+	
+	var scroll_vbox = VBoxContainer.new()
+	scroll_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll_vbox.add_theme_constant_override("separation", 20)
+	scroll.add_child(scroll_vbox)
+	
+	var instructions = [
+		{"title": "◆ MODE 1: PUZZLE ORB FLOW", "color": Color(0.0, 0.9, 1.0), "desc": "• Draw vector lines with your finger or mouse to guide the energy Orb.\n• Collect all glowing data stars and hit the destination core.\n• Avoid active red ICE firewalls and bottom hazards!"},
+		{"title": "◆ MODE 2: CYBER HANGMAN (Terminals 3 & 7)", "color": Color(1.0, 0.7, 0.0), "desc": "• Tap the enlarged virtual keyboard to decrypt hidden keys.\n• Beat the time-bomb countdown or risk byte corruption!\n• Use the Context Hint button if you hit a deadlock."},
+		{"title": "◆ MODE 3: NEON COLOR SWITCH (Terminal 6)", "color": Color(1.0, 0.85, 0.0), "desc": "• Switch your frequency color to match incoming pulse waves.\n• Clear all synchronization checkpoints to bypass the firewall."},
+		{"title": "◆ MODE 4: ICE BREAKER (Terminal 8)", "color": Color(0.0, 1.0, 0.9), "desc": "• Navigate through static and sweeping laser grids.\n• Manage your generous ink juice meter carefully."},
+		{"title": "◆ MODE 5: SPACE SHOOTER (Terminals 2, 4, 9)", "color": Color(1.0, 0.4, 0.2), "desc": "• Pilot your starfighter and blast incoming cyber threats.\n• Survive enemy fighter waves to clear defense protocols."},
+		{"title": "◆ MODE 6: DATA UNBLOCK (Terminal 10)", "color": Color(1.0, 0.1, 0.5), "desc": "• Slide firewall blocks across the grid matrix.\n• Clear a direct path for the Red Key Node to escape!"}
+	]
+	
+	for item in instructions:
+		var section_box = VBoxContainer.new()
+		section_box.add_theme_constant_override("separation", 6)
+		
+		var head = Label.new()
+		head.text = item["title"]
+		head.add_theme_font_size_override("font_size", 22)
+		head.add_theme_color_override("font_color", item["color"])
+		section_box.add_child(head)
+		
+		var desc = Label.new()
+		desc.text = item["desc"]
+		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc.add_theme_font_size_override("font_size", 18)
+		desc.add_theme_color_override("font_color", Color(0.95, 0.95, 0.95))
+		section_box.add_child(desc)
+		
+		scroll_vbox.add_child(section_box)
+		
+		var sep = ColorRect.new()
+		sep.custom_minimum_size = Vector2(0, 2)
+		sep.color = Color(1.0, 0.0, 0.5, 0.4)
+		scroll_vbox.add_child(sep)
+
+	create_cyber_button(vbox, "✖ CLOSE MANUAL", Color(1.0, 0.0, 0.5), func():
 		play_menu_click_sfx()
 		canvas.queue_free()
 	)
 	
 	add_child(canvas)
 
+# --- EXPANDED, FEATURE-RICH CYBERPUNK SETTINGS MENU ---
 func show_settings_overlay() -> void:
 	var canvas = CanvasLayer.new()
 	canvas.name = "SettingsOverlay"
 	canvas.layer = 100
 	
 	var dark_rect = ColorRect.new()
-	dark_rect.color = Color(0.02, 0.01, 0.05, 0.92)
+	dark_rect.color = Color(0.02, 0.01, 0.05, 0.96)
 	dark_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	canvas.add_child(dark_rect)
 	
@@ -253,25 +254,59 @@ func show_settings_overlay() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	canvas.add_child(center)
 	
+	# Cyber Panel Container
+	var panel = PanelContainer.new()
+	panel.custom_minimum_size = Vector2(580, 740)
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.04, 0.02, 0.12, 0.98)
+	panel_style.border_width_left = 4
+	panel_style.border_width_top = 4
+	panel_style.border_width_right = 4
+	panel_style.border_width_bottom = 4
+	panel_style.border_color = Color(1.0, 0.0, 0.5)
+	panel_style.corner_radius_top_left = 16
+	panel_style.corner_radius_top_right = 16
+	panel_style.corner_radius_bottom_left = 16
+	panel_style.corner_radius_bottom_right = 16
+	panel_style.content_margin_left = 30
+	panel_style.content_margin_right = 30
+	panel_style.content_margin_top = 30
+	panel_style.content_margin_bottom = 30
+	panel.add_theme_stylebox_override("panel", panel_style)
+	center.add_child(panel)
+	
 	var vbox = VBoxContainer.new()
-	vbox.custom_minimum_size = Vector2(450, 400)
-	vbox.add_theme_constant_override("separation", 25)
-	center.add_child(vbox)
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 20)
+	panel.add_child(vbox)
 	
 	var title = Label.new()
-	title.text = "SETTINGS"
+	title.text = "🛠 SYSTEM CONFIG 🛠"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 36)
+	title.add_theme_font_size_override("font_size", 34)
 	title.add_theme_color_override("font_color", Color(1.0, 0.0, 0.5))
 	vbox.add_child(title)
 	
+	var sub = Label.new()
+	sub.text = "// MAINFRAME PREFERENCES & TOGGLES //"
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub.add_theme_font_size_override("font_size", 14)
+	sub.add_theme_color_override("font_color", Color(0.0, 0.9, 1.0))
+	vbox.add_child(sub)
+	
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 5)
+	vbox.add_child(spacer)
+	
+	# --- 1. MASTER VOLUME ---
 	var vol_label = Label.new()
-	vol_label.text = "MASTER VOLUME"
+	vol_label.text = "MASTER AUDIO VOLUME"
 	vol_label.add_theme_font_size_override("font_size", 16)
-	vol_label.add_theme_color_override("font_color", Color(0.0, 0.9, 1.0))
+	vol_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
 	vbox.add_child(vol_label)
 	
 	var slider = HSlider.new()
+	slider.custom_minimum_size = Vector2(0, 35)
 	slider.min_value = 0.0
 	slider.max_value = 1.0
 	slider.step = 0.05
@@ -280,8 +315,66 @@ func show_settings_overlay() -> void:
 		AudioServer.set_bus_volume_db(0, linear_to_db(val))
 	)
 	vbox.add_child(slider)
+
+	# --- 2. SFX VOLUME ---
+	var sfx_label = Label.new()
+	sfx_label.text = "SFX PULSE FREQUENCY"
+	sfx_label.add_theme_font_size_override("font_size", 16)
+	sfx_label.add_theme_color_override("font_color", Color(0.0, 1.0, 0.9))
+	vbox.add_child(sfx_label)
 	
-	create_cyber_button(vbox, "✔ SAVE & CLOSE", Color(0.0, 0.9, 1.0), func():
+	var sfx_slider = HSlider.new()
+	sfx_slider.custom_minimum_size = Vector2(0, 35)
+	sfx_slider.min_value = 0.0
+	sfx_slider.max_value = 1.0
+	sfx_slider.step = 0.05
+	sfx_slider.value = 0.8
+	sfx_slider.value_changed.connect(func(_val: float):
+		play_menu_click_sfx()
+	)
+	vbox.add_child(sfx_slider)
+
+	# --- 3. CRT SCANLINE TOGGLE ---
+	var crt_toggle_box = HBoxContainer.new()
+	vbox.add_child(crt_toggle_box)
+	
+	var crt_label = Label.new()
+	crt_label.text = "RETRO CRT SCANLINE FILTER"
+	crt_label.add_theme_font_size_override("font_size", 16)
+	crt_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	crt_toggle_box.add_child(crt_label)
+	
+	var crt_spacer = Control.new()
+	crt_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	crt_toggle_box.add_child(crt_spacer)
+	
+	var crt_check = CheckBox.new()
+	crt_check.button_pressed = true
+	crt_toggle_box.add_child(crt_check)
+
+	# --- 4. SCREEN SHAKE TOGGLE ---
+	var shake_toggle_box = HBoxContainer.new()
+	vbox.add_child(shake_toggle_box)
+	
+	var shake_label = Label.new()
+	shake_label.text = "IMPACT SCREEN SHAKE"
+	shake_label.add_theme_font_size_override("font_size", 16)
+	shake_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	shake_toggle_box.add_child(shake_label)
+	
+	var shake_spacer = Control.new()
+	shake_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	shake_toggle_box.add_child(shake_spacer)
+	
+	var shake_check = CheckBox.new()
+	shake_check.button_pressed = true
+	shake_toggle_box.add_child(shake_check)
+
+	var spacer2 = Control.new()
+	spacer2.custom_minimum_size = Vector2(0, 10)
+	vbox.add_child(spacer2)
+
+	create_cyber_button(vbox, "✔ SAVE & CLOSE CONFIG", Color(0.0, 0.9, 1.0), func():
 		play_menu_click_sfx()
 		canvas.queue_free()
 	)
@@ -294,36 +387,36 @@ func show_terminal_selector(container: CenterContainer) -> void:
 
 	var vbox = VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.custom_minimum_size = Vector2(460, 850)
+	vbox.custom_minimum_size = Vector2(500, 900)
 	container.add_child(vbox)
 
 	var title = Label.new()
 	title.text = "SELECT TERMINAL"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 36)
+	title.add_theme_font_size_override("font_size", 40)
 	title.add_theme_color_override("font_color", Color(0.0, 1.0, 0.5))
 	vbox.add_child(title)
 
 	var sub = Label.new()
 	sub.text = "CHOOSE MAINFRAME DECRYPTION TARGET (1 - 10)"
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	sub.add_theme_font_size_override("font_size", 12)
+	sub.add_theme_font_size_override("font_size", 14)
 	sub.add_theme_color_override("font_color", Color(0.0, 0.9, 1.0))
 	vbox.add_child(sub)
 
 	var spacer = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 10)
+	spacer.custom_minimum_size = Vector2(0, 12)
 	vbox.add_child(spacer)
 
 	var scroll = ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(450, 600)
+	scroll.custom_minimum_size = Vector2(480, 640)
 	scroll.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	vbox.add_child(scroll)
 
 	var scroll_vbox = VBoxContainer.new()
 	scroll_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	scroll_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll_vbox.add_theme_constant_override("separation", 8)
+	scroll_vbox.add_theme_constant_override("separation", 12)
 	scroll.add_child(scroll_vbox)
 
 	var terminal_data = [
@@ -371,7 +464,7 @@ func show_terminal_selector(container: CenterContainer) -> void:
 		)
 
 	var spacer2 = Control.new()
-	spacer2.custom_minimum_size = Vector2(0, 10)
+	spacer2.custom_minimum_size = Vector2(0, 12)
 	vbox.add_child(spacer2)
 
 	create_cyber_button(vbox, "« BACK TO MAIN MENU", Color(1.0, 0.0, 0.4), func():
@@ -400,22 +493,22 @@ func launch_level(lvl: int) -> void:
 func create_cyber_button(parent: Node, text: String, accent_color: Color, callback: Callable) -> void:
 	var btn = Button.new()
 	btn.text = text
-	btn.custom_minimum_size = Vector2(340, 46)
+	btn.custom_minimum_size = Vector2(420, 62)
 	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	btn.add_theme_font_size_override("font_size", 14)
+	btn.add_theme_font_size_override("font_size", 20)
 	btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	
 	var style_normal = StyleBoxFlat.new()
-	style_normal.bg_color = Color(0.06, 0.04, 0.12, 0.9)
+	style_normal.bg_color = Color(0.06, 0.04, 0.12, 0.92)
 	style_normal.border_width_left = 2
 	style_normal.border_width_top = 2
 	style_normal.border_width_right = 2
 	style_normal.border_width_bottom = 2
 	style_normal.border_color = accent_color
-	style_normal.corner_radius_top_left = 6
-	style_normal.corner_radius_top_right = 6
-	style_normal.corner_radius_bottom_left = 6
-	style_normal.corner_radius_bottom_right = 6
+	style_normal.corner_radius_top_left = 8
+	style_normal.corner_radius_top_right = 8
+	style_normal.corner_radius_bottom_left = 8
+	style_normal.corner_radius_bottom_right = 8
 	
 	btn.add_theme_stylebox_override("normal", style_normal)
 	btn.add_theme_stylebox_override("hover", style_normal)
@@ -426,7 +519,7 @@ func create_cyber_button(parent: Node, text: String, accent_color: Color, callba
 
 func add_menu_spacer(parent: Node) -> void:
 	var s = Control.new()
-	s.custom_minimum_size = Vector2(0, 6)
+	s.custom_minimum_size = Vector2(0, 12)
 	parent.add_child(s)
 
 class VaporwaveBackground extends Control:
