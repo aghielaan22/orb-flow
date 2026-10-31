@@ -174,12 +174,11 @@ var level_time_elapsed: float = 0.0
 func handle_spawning(delta: float) -> void:
 	level_time_elapsed += delta
 	
-	# Progressive spawn rates based on stage difficulty
 	var base_spawn_rate = 1.2
 	if main_game_level() == 4:
 		base_spawn_rate = 0.85
 	elif main_game_level() == 9:
-		base_spawn_rate = 0.45 # High-intensity Overdrive spawn rate
+		base_spawn_rate = 0.45
 	elif main_game_level() >= 6:
 		base_spawn_rate = 0.55
 		
@@ -188,14 +187,12 @@ func handle_spawning(delta: float) -> void:
 		spawn_timer = 0.0
 		spawn_enemy()
 
-	# Terminal 9: Spawn Green Obstacles / Entities
 	if main_game_level() == 9:
 		obstacle_spawn_timer += delta
 		if obstacle_spawn_timer >= 1.8:
 			obstacle_spawn_timer = 0.0
 			spawn_green_obstacle()
 
-	# Enemy firing frequency scales up in higher terminals
 	if main_game_level() >= 4:
 		var fire_interval = 1.4 if main_game_level() == 4 else (0.7 if main_game_level() == 9 else 1.0)
 		enemy_fire_timer += delta
@@ -253,7 +250,7 @@ func spawn_green_obstacle() -> void:
 
 	var visual = Line2D.new()
 	visual.width = 4.0
-	visual.default_color = Color(0.0, 1.0, 0.4) # Glowing green entity obstacle
+	visual.default_color = Color(0.0, 1.0, 0.4)
 	var box_points = [
 		Vector2(-25, -25), Vector2(25, -25),
 		Vector2(25, 25), Vector2(-25, 25), Vector2(-25, -25)
@@ -374,7 +371,6 @@ func update_projectiles_and_enemies(delta: float) -> void:
 		else:
 			enemies.remove_at(i)
 
-	# Update Terminal 9 Green Obstacles movement
 	for i in range(green_obstacles.size() - 1, -1, -1):
 		var obs = green_obstacles[i]
 		if is_instance_valid(obs):
@@ -513,19 +509,18 @@ func setup_ui() -> void:
 	red_line.add_point(Vector2(screen_size.x, red_line_y))
 	canvas.add_child(red_line)
 
-	# --- HORIZONTAL THUMB SLIDER (Bottom Left, opposite Fire button) ---
+	# --- CHUNKY, LARGER THUMB SLIDER (Bottom-Left Side, Easy to Grab) ---
 	steering_slider = HSlider.new()
 	steering_slider.min_value = -1.0
 	steering_slider.max_value = 1.0
-	steering_slider.step = 0.01
+	steering_slider.step = 0.005
 	steering_slider.value = 0.0
-	steering_slider.custom_minimum_size = Vector2(240, 50)
-	steering_slider.position = Vector2(30, screen_size.y - 125)
+	steering_slider.custom_minimum_size = Vector2(300, 70) # Bigger, chunkier touch target!
+	steering_slider.position = Vector2(25, screen_size.y - 135)
 	
 	steering_slider.value_changed.connect(func(val: float):
-		input_dir = val * 1.8 # Multiplier for responsive thumb control
+		input_dir = val * 3.2 # High responsiveness multiplier for fast movement
 	)
-	# When user releases thumb, smoothly spring slider back to center
 	steering_slider.gui_input.connect(func(event: InputEvent):
 		if event is InputEventMouseButton and not event.pressed:
 			var tween = create_tween()
@@ -537,8 +532,10 @@ func setup_ui() -> void:
 	canvas.add_child(steering_slider)
 
 	var slider_label = Label.new()
-	slider_label.text = "◄ STEER ►"
-	slider_label.position = Vector2(95, screen_size.y - 155)
+	slider_label.text = "◄ STEER SHIP ►"
+	slider_label.position = Vector2(25, screen_size.y - 165)
+	slider_label.custom_minimum_size = Vector2(300, 20)
+	slider_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	slider_label.add_theme_font_size_override("font_size", 14)
 	slider_label.add_theme_color_override("font_color", Color(0.0, 0.9, 1.0))
 	canvas.add_child(slider_label)
@@ -579,6 +576,9 @@ func create_control_button(txt: String, pos: Vector2, min_size: Vector2, border_
 	style.corner_radius_top_right = 8
 	style.corner_radius_bottom_left = 8
 	style.corner_radius_bottom_right = 8
+	btn.add_theme_stylebox_override("normal", style)
+	btn.add_theme_stylebox_override("hover", style)
+	btn.add_theme_stylebox_override("pressed", style)
 	return btn
 
 func create_arcade_button_style(border_color: Color) -> StyleBoxFlat:
